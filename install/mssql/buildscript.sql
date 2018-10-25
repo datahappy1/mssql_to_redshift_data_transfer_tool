@@ -16,6 +16,7 @@ CREATE TABLE mngmt.ExecutionLogs (
 	[ExecutionStep] VARCHAR(10),
 	[DatabaseName] VARCHAR(255),
 	[SchemaName] VARCHAR(255),
+	[TableName] VARCHAR(255),
 	[TargetDirectory] VARCHAR(255),
 	[Filename] VARCHAR(300), 
 	[Status] CHAR(1),
@@ -120,11 +121,12 @@ BEGIN TRY
 
 	SET @Message =	(SELECT command FROM @BCPOutput WHERE id = (SELECT MAX(id) - 3 FROM @BCPOutput));
 
-	INSERT INTO mngmt.ExecutionLogs (ExecutionDT, ExecutionStep, DatabaseName, SchemaName, TargetDirectory, [Filename], [Status], [Message]) 
+	INSERT INTO mngmt.ExecutionLogs (ExecutionDT, ExecutionStep, DatabaseName, SchemaName, Tablename, TargetDirectory, [Filename], [Status], [Message]) 
 		SELECT	GETDATE() AS ExecutionDT,
 				'MSSQL-BCP' AS ExecutionStep,
 				@DatabaseName AS DatabaseName,
-				@SchemaName AS SchemaName, 
+				@SchemaName AS SchemaName,
+				@TableName AS TableName,
 				@TargetDirectory AS TargetDirectory,
 				@TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv' AS [Filename],
 				CASE 
