@@ -14,23 +14,23 @@ CREATE TABLE mngmt.ExecutionLogs (
 	[Log_ID] INT PRIMARY KEY IDENTITY(1,1),
 	[ExecutionDT] DATETIME, 
 	[ExecutionStep] VARCHAR(10),
-	[DatabaseName] VARCHAR(255),
-	[SchemaName] VARCHAR(255),
-	[TableName] VARCHAR(255),
+	[DatabaseName] VARCHAR(128),
+	[SchemaName] VARCHAR(128),
+	[TableName] VARCHAR(128),
 	[TargetDirectory] VARCHAR(255),
 	[Filename] VARCHAR(300), 
 	[Status] CHAR(1),
 	[Message] VARCHAR(MAX)
-)
+) 
 GO
 
 CREATE TABLE mngmt.ControlTable (	
 	ControlTable_ID INT PRIMARY KEY IDENTITY(1,1),
-	DatabaseName VARCHAR(255),
-	SchemaName VARCHAR(255),
-	TableName VARCHAR(255),
-	ColumnName VARCHAR(255),
-	Column_id INT,
+	DatabaseName VARCHAR(128),
+	SchemaName VARCHAR(128),
+	TableName VARCHAR(128),
+	ColumnName VARCHAR(128),
+	Column_id SMALLINT,
 	IsActive BIT
 )
 GO
@@ -58,8 +58,8 @@ USE MSSQL_to_Redshift;
 GO
 
 CREATE PROCEDURE mngmt.Extract_Filter_BCP (	
-  @DatabaseName VARCHAR(255), 
-  @SchemaName VARCHAR(255),  
+  @DatabaseName VARCHAR(128), 
+  @SchemaName VARCHAR(128),  
   @TargetDirectory VARCHAR(255)
 )
 AS
@@ -68,10 +68,10 @@ AS
 --Declarations:
 ---------------------
 DECLARE @ID SMALLINT;
-DECLARE @TableName VARCHAR(255);
+DECLARE @TableName VARCHAR(128);
 DECLARE @ColumnNamesSerialized VARCHAR(MAX);
 DECLARE @BCPCommand VARCHAR(4000);
-DECLARE @Message NVARCHAR(256);
+DECLARE @Message VARCHAR(MAX);
 DECLARE @DTNow CHAR(19) = FORMAT(GetDate(), 'yyyy_MM_dd_HH_mm_ss')
 
 ---------------------
@@ -121,11 +121,11 @@ BEGIN TRY
 
 	SET @Message =	(SELECT command FROM @BCPOutput WHERE id = (SELECT MAX(id) - 3 FROM @BCPOutput));
 
-	INSERT INTO mngmt.ExecutionLogs (ExecutionDT, ExecutionStep, DatabaseName, SchemaName, Tablename, TargetDirectory, [Filename], [Status], [Message]) 
+	INSERT INTO mngmt.ExecutionLogs (ExecutionDT, ExecutionStep, DatabaseName, SchemaName, TableName, TargetDirectory, [Filename], [Status], [Message]) 
 		SELECT	GETDATE() AS ExecutionDT,
 				'MSSQL-BCP' AS ExecutionStep,
 				@DatabaseName AS DatabaseName,
-				@SchemaName AS SchemaName,
+				@SchemaName AS SchemaName, 
 				@TableName AS TableName,
 				@TargetDirectory AS TargetDirectory,
 				@TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv' AS [Filename],
