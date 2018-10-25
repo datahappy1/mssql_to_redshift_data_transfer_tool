@@ -72,23 +72,27 @@ DECLARE @DTNow CHAR(19) = FORMAT(GetDate(), 'yyyy_MM_dd_HH_mm_ss')
 ---------------------
 --Execution:
 ---------------------
-SELECT	ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RN,
+SELECT i.*
+INTO #tmp
+FROM (
+	SELECT	ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RN,
 		DatabaseName,
 		SchemaName,
 		TableName,
 		STUFF(
-				(	SELECT ', ' + Columnname 
-					FROM mngmt.ControlTable i 
-					WHERE	i.DatabaseName = o.DatabaseName
-						AND i.SchemaName = o.SchemaName
-						AND i.TableName = o.TableName	
-						AND IsActive = 1 
-					ORDER BY i.Column_id
-					FOR XML PATH ('')), 1, 1, ''
+			(	SELECT ', ' + Columnname 
+				FROM mngmt.ControlTable i 
+				WHERE	i.DatabaseName = o.DatabaseName
+					AND i.SchemaName = o.SchemaName
+					AND i.TableName = o.TableName	
+					AND IsActive = 1 
+				ORDER BY i.Column_id
+				FOR XML PATH ('')), 1, 1, ''
 			) AS ColumnNamesSerialized
-INTO #tmp
-FROM mngmt.ControlTable o
-GROUP BY DatabaseName,SchemaName,TableName;
+	FROM mngmt.ControlTable o
+	GROUP BY DatabaseName,SchemaName,TableName
+) i
+WHERE i.ColumnNamesSerialized IS NOT NULL;
 
 WHILE EXISTS (SELECT * FROM #tmp)
 BEGIN TRY
