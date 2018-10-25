@@ -4,15 +4,15 @@ GO
 CREATE DATABASE MSSQL_to_Redshift;
 GO
 
-USE MSSQL_to_Reshift;
+USE MSSQL_to_Redshift;
 GO
 
 CREATE SCHEMA mngmt;
 GO
 
 CREATE TABLE mngmt.ExecutionLogs (
-  [Log_ID] INT PRIMARY KEY IDENTITY(1,1),
-  [ExecutionDT] DATETIME, 
+	[Log_ID] INT PRIMARY KEY IDENTITY(1,1),
+	[ExecutionDT] DATETIME, 
 	[FilenameOut] VARCHAR(300), 
 	[Status] CHAR(1),
 	[Message] VARCHAR(MAX)
@@ -20,8 +20,8 @@ CREATE TABLE mngmt.ExecutionLogs (
 GO
 
 CREATE TABLE mngmt.ControlTable (	
-  ControlTable_ID INT PRIMARY KEY IDENTITY(1,1),
-  DatabaseName VARCHAR(255),
+	ControlTable_ID INT PRIMARY KEY IDENTITY(1,1),
+	DatabaseName VARCHAR(255),
 	SchemaName VARCHAR(255),
 	TableName VARCHAR(255),
 	ColumnName VARCHAR(255),
@@ -49,7 +49,7 @@ INNER JOIN sys.columns c ON c.object_id = t.object_id
 ORDER BY t.object_id;
 
 
-USE MSSQL_to_Reshift;
+USE MSSQL_to_Redshift;
 GO
 
 CREATE PROCEDURE mngmt.Extract_Filter_BCP (	
