@@ -13,10 +13,14 @@ GO
 CREATE TABLE mngmt.ExecutionLogs (
 	[Log_ID] INT PRIMARY KEY IDENTITY(1,1),
 	[ExecutionDT] DATETIME, 
-	[FilenameOut] VARCHAR(300), 
+	[ExecutionStep] VARCHAR(10),
+	[DatabaseName] VARCHAR(255),
+	[SchemaName] VARCHAR(255),
+	[TargetDirectory] VARCHAR(255),
+	[Filename] VARCHAR(300), 
 	[Status] CHAR(1),
 	[Message] VARCHAR(MAX)
-) 
+)
 GO
 
 CREATE TABLE mngmt.ControlTable (	
@@ -76,19 +80,19 @@ SELECT i.*
 INTO #tmp
 FROM (
 	SELECT	ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RN,
-		DatabaseName,
-		SchemaName,
-		TableName,
-		STUFF(
-			(	SELECT ', ' + Columnname 
-				FROM mngmt.ControlTable i 
-				WHERE	i.DatabaseName = o.DatabaseName
-					AND i.SchemaName = o.SchemaName
-					AND i.TableName = o.TableName	
-					AND IsActive = 1 
-				ORDER BY i.Column_id
-				FOR XML PATH ('')), 1, 1, ''
-			) AS ColumnNamesSerialized
+			DatabaseName,
+			SchemaName,
+			TableName,
+			STUFF(
+					(	SELECT ', ' + Columnname 
+						FROM mngmt.ControlTable i 
+						WHERE	i.DatabaseName = o.DatabaseName
+							AND i.SchemaName = o.SchemaName
+							AND i.TableName = o.TableName	
+							AND IsActive = 1 
+						ORDER BY i.Column_id
+						FOR XML PATH ('')), 1, 1, ''
+				) AS ColumnNamesSerialized
 	FROM mngmt.ControlTable o
 	GROUP BY DatabaseName,SchemaName,TableName
 ) i
@@ -116,9 +120,13 @@ BEGIN TRY
 
 	SET @Message =	(SELECT command FROM @BCPOutput WHERE id = (SELECT MAX(id) - 3 FROM @BCPOutput));
 
-	INSERT INTO mngmt.ExecutionLogs (ExecutionDT, FilenameOut, [Status], [Message]) 
-		SELECT	GETDATE() AS ExecutionDT, 
-				@TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv' AS FilenameOut,
+	INSERT INTO mngmt.ExecutionLogs (ExecutionDT, ExecutionStep, DatabaseName, SchemaName, TargetDirectory, [Filename], [Status], [Message]) 
+		SELECT	GETDATE() AS ExecutionDT,
+				'MSSQL-BCP' AS ExecutionStep,
+				@DatabaseName AS DatabaseName,
+				@SchemaName AS SchemaName, 
+				@TargetDirectory AS TargetDirectory,
+				@TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv' AS [Filename],
 				CASE 
 					WHEN @Message LIKE '% rows copied.' THEN 'S'
 					ELSE 'F'
