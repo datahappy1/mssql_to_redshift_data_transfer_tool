@@ -64,83 +64,95 @@ CREATE PROCEDURE mngmt.Extract_Filter_BCP (
 )
 AS
 
----------------------
---Declarations:
----------------------
-DECLARE @ID SMALLINT;
-DECLARE @TableName VARCHAR(128);
-DECLARE @ColumnNamesSerialized VARCHAR(MAX);
-DECLARE @BCPCommand VARCHAR(4000);
-DECLARE @Message VARCHAR(MAX);
-DECLARE @DTNow CHAR(19) = FORMAT(GetDate(), 'yyyy_MM_dd_HH_mm_ss')
-
----------------------
---Execution:
----------------------
-SELECT i.*
-INTO #tmp
-FROM (
-	SELECT	ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RN,
-			DatabaseName,
-			SchemaName,
-			TableName,
-			STUFF(
-					(	SELECT ', ' + Columnname 
-						FROM mngmt.ControlTable i 
-						WHERE	i.DatabaseName = o.DatabaseName
-							AND i.SchemaName = o.SchemaName
-							AND i.TableName = o.TableName	
-							AND IsActive = 1 
-						ORDER BY i.Column_id
-						FOR XML PATH ('')), 1, 1, ''
-				) AS ColumnNamesSerialized
-	FROM mngmt.ControlTable o
-	GROUP BY DatabaseName,SchemaName,TableName
-) i
-WHERE i.ColumnNamesSerialized IS NOT NULL;
-
-WHILE EXISTS (SELECT * FROM #tmp)
 BEGIN TRY
+	---------------------
+	--Declarations:
+	---------------------
+	DECLARE @ID SMALLINT;
+	DECLARE @TableName VARCHAR(128);
+	DECLARE @ColumnNamesSerialized VARCHAR(MAX);
+	DECLARE @BCPCommand VARCHAR(4000);
+	DECLARE @Message VARCHAR(MAX);
+	DECLARE @DTNow CHAR(19) = FORMAT(GetDate(), 'yyyy_MM_dd_HH_mm_ss')
+	DECLARE @Files VARCHAR(MAX) = '';
+
+	---------------------
+	--Execution:
+	---------------------
+	SELECT i.*
+	INTO #tmp
+	FROM (
+		SELECT	ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RN,
+				DatabaseName,
+				SchemaName,
+				TableName,
+				STUFF(
+						(	SELECT ', ' + Columnname 
+							FROM mngmt.ControlTable i 
+							WHERE	i.DatabaseName = o.DatabaseName
+								AND i.SchemaName = o.SchemaName
+								AND i.TableName = o.TableName	
+								AND IsActive = 1 
+							ORDER BY i.Column_id
+							FOR XML PATH ('')), 1, 1, ''
+					) AS ColumnNamesSerialized
+		FROM mngmt.ControlTable o
+		GROUP BY DatabaseName,SchemaName,TableName
+	) i
+	WHERE i.ColumnNamesSerialized IS NOT NULL;
+
+	WHILE EXISTS (SELECT * FROM #tmp)
+	BEGIN
+
+		SELECT TOP(1) 
+		@ID = RN,
+		@DatabaseName = DatabaseName,
+		@SchemaName = Schemaname,
+		@TableName = TableName,
+		@ColumnNamesSerialized = ColumnNamesSerialized
+		FROM #tmp
+		ORDER BY RN;
  
-	SELECT TOP(1) 
-	@ID = RN,
-	@DatabaseName = DatabaseName,
-	@SchemaName = Schemaname,
-	@TableName = TableName,
-	@ColumnNamesSerialized = ColumnNamesSerialized
-	FROM #tmp
-	ORDER BY RN;
- 
-	SELECT @BCPCommand =
-	'BCP "SELECT ' + @ColumnNamesSerialized + ' FROM ' + @DatabaseName + '.' + @SchemaName + '.' + @TableName +'" queryout ' + @TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv -c -t, -T -S' + @@servername;
+		SELECT @BCPCommand =
+		'BCP "SELECT ' + @ColumnNamesSerialized + ' FROM ' + @DatabaseName + '.' + @SchemaName + '.' + @TableName +'" queryout ' + @TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv -c -t, -T -S' + @@servername;
 	
-	DECLARE @BCPOutput TABLE (id INT IDENTITY, command NVARCHAR(256))
+		DECLARE @BCPOutput TABLE (id INT IDENTITY, command NVARCHAR(256))
 
-	INSERT INTO @BCPOutput
-	EXEC master..xp_cmdshell @BCPCommand
+		INSERT INTO @BCPOutput
+		EXEC master..xp_cmdshell @BCPCommand
 
-	SET @Message =	(SELECT command FROM @BCPOutput WHERE id = (SELECT MAX(id) - 3 FROM @BCPOutput));
+		SET @Message =	(SELECT command FROM @BCPOutput WHERE id = (SELECT MAX(id) - 3 FROM @BCPOutput));
 
-	INSERT INTO mngmt.ExecutionLogs (ExecutionDT, ExecutionStep, DatabaseName, SchemaName, TableName, TargetDirectory, [Filename], [Status], [Message]) 
-		SELECT	GETDATE() AS ExecutionDT,
-				'MSSQL-BCP' AS ExecutionStep,
-				@DatabaseName AS DatabaseName,
-				@SchemaName AS SchemaName, 
-				@TableName AS TableName,
-				@TargetDirectory AS TargetDirectory,
-				@TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv' AS [Filename],
-				CASE 
-					WHEN @Message LIKE '% rows copied.' THEN 'S'
-					ELSE 'F'
-				END AS [Status],
-				@Message AS [Message]
+		SET @Files = @Files + '''' + @TargetDirectory + '\' + @TableName + '_' + @DTNow 
+					  +	CASE 
+							WHEN @ID = (SELECT MAX(RN) FROM #tmp) THEN '.csv''' 
+						ELSE '.csv'',' 
+						END 	
 
-	DELETE FROM #tmp WHERE RN = @ID;
+		INSERT INTO mngmt.ExecutionLogs (ExecutionDT, ExecutionStep, DatabaseName, SchemaName, TableName, TargetDirectory, [Filename], [Status], [Message]) 
+			SELECT	GETDATE() AS ExecutionDT,
+					'MSSQL-BCP' AS ExecutionStep,
+					@DatabaseName AS DatabaseName,
+					@SchemaName AS SchemaName, 
+					@TableName AS TableName,
+					@TargetDirectory AS TargetDirectory,
+					@TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv' AS [Filename],
+					CASE 
+						WHEN @Message LIKE '% rows copied.' THEN 'S'
+						ELSE 'F'
+					END AS [Status],
+					@Message AS [Message]
+
+		DELETE FROM #tmp WHERE RN = @ID;
+	END
+
+	SELECT '(' + ISNULL(@Files,'#NA') + ')' AS Files
 
 END TRY
+
 BEGIN CATCH
 
-  SELECT 
+	SELECT 
 		 ERROR_NUMBER() AS ErrorNumber
 		,ERROR_SEVERITY() AS ErrorSeverity
 		,ERROR_STATE() AS ErrorState
