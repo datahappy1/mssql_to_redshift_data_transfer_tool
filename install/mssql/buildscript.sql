@@ -91,7 +91,9 @@ BEGIN TRY
 		@Status, 
 		@Message
 END TRY
+
 BEGIN CATCH
+
 	SELECT 
 		'Row not logged, MSSQL error, details:'
 		+ '  Error_Number' + CAST(ERROR_NUMBER() AS VARCHAR(9))
