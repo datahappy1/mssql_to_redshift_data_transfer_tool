@@ -57,6 +57,54 @@ ORDER BY t.object_id;
 USE MSSQL_to_Redshift;
 GO
 
+CREATE PROCEDURE mngmt.ExecutionLogs_Insert (
+@ExecutionStep VARCHAR(10), 
+@DatabaseName VARCHAR(128), 
+@SchemaName VARCHAR(128), 
+@TableName VARCHAR(128), 
+@TargetDirectory VARCHAR(255), 
+@Filename VARCHAR(300), 
+@Status CHAR(1), 
+@Message VARCHAR(MAX)
+)
+AS
+BEGIN TRY
+	INSERT INTO mngmt.ExecutionLogs (
+		ExecutionDT, 
+		ExecutionStep, 
+		DatabaseName, 
+		SchemaName, 
+		TableName, 
+		TargetDirectory, 
+		[Filename], 
+		[Status], 
+		[Message]
+		)
+	SELECT 	
+		GETDATE(), 
+		@ExecutionStep, 
+		@DatabaseName, 
+		@SchemaName, 
+		@TableName, 
+		@TargetDirectory, 
+		@Filename, 
+		@Status, 
+		@Message
+END TRY
+BEGIN CATCH
+	SELECT 
+		'Row not logged, MSSQL error, details:'
+		+ '  Error_Number' + CAST(ERROR_NUMBER() AS VARCHAR(9))
+		+ '; Error_Severity:' + CAST(ERROR_SEVERITY() AS VARCHAR(9))
+		+ '; Error_State:' + CAST(ERROR_STATE() AS VARCHAR(9))
+		+ '; Error_Procedure:' + ERROR_PROCEDURE() 
+		+ '; Error_Line:' + CAST(ERROR_LINE() AS VARCHAR(9))
+		+ '; Error_Message:' + ERROR_MESSAGE()
+		AS Result;
+END CATCH
+
+GO
+
 CREATE PROCEDURE mngmt.Extract_Filter_BCP (	
   @DatabaseName VARCHAR(128), 
   @SchemaName VARCHAR(128),  
@@ -75,6 +123,8 @@ BEGIN TRY
 	DECLARE @BCPCommand VARCHAR(4000);
 	DECLARE @Message VARCHAR(MAX);
 	DECLARE @DTNow CHAR(19) = FORMAT(GetDate(), 'yyyy_MM_dd_HH_mm_ss')
+	DECLARE @Status CHAR(1);
+	DECLARE @FileName VARCHAR(300);
 
 	---------------------
 	--Execution:
@@ -113,8 +163,10 @@ BEGIN TRY
 		FROM #tmp
 		ORDER BY RN;
  
+		SET @FileName = @TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv';
+
 		SELECT @BCPCommand =
-		'BCP "SELECT ' + @ColumnNamesSerialized + ' FROM ' + @DatabaseName + '.' + @SchemaName + '.' + @TableName +' WHERE 1=0" queryout ' + @TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv -c -t, -T -S' + @@servername;
+		'BCP "SELECT ' + @ColumnNamesSerialized + ' FROM ' + @DatabaseName + '.' + @SchemaName + '.' + @TableName +' WHERE 1=0" queryout ' + @FileName + ' -c -t, -T -S' + @@servername;
 	
 		DECLARE @BCPOutput TABLE (id INT IDENTITY, command NVARCHAR(256))
 
@@ -123,25 +175,20 @@ BEGIN TRY
 
 		SET @Message =	(SELECT command FROM @BCPOutput WHERE id = (SELECT MAX(id) - 3 FROM @BCPOutput));
 
-		SET @Result = @Result + '''' + @TargetDirectory + '\' + @TableName + '_' + @DTNow 
-					  +	CASE 
-							WHEN @ID = (SELECT MAX(RN) FROM #tmp) THEN '.csv''' 
-						ELSE '.csv'',' 
-						END 	
+		SET @Status =	CASE 
+					WHEN @Message LIKE '% rows copied.' 
+						THEN 'S'
+					ELSE 'F'
+				END;
 
-		INSERT INTO mngmt.ExecutionLogs (ExecutionDT, ExecutionStep, DatabaseName, SchemaName, TableName, TargetDirectory, [Filename], [Status], [Message]) 
-			SELECT	GETDATE() AS ExecutionDT,
-					'MSSQL-BCP' AS ExecutionStep,
-					@DatabaseName AS DatabaseName,
-					@SchemaName AS SchemaName, 
-					@TableName AS TableName,
-					@TargetDirectory AS TargetDirectory,
-					@TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv' AS [Filename],
-					CASE 
-						WHEN @Message LIKE '% rows copied.' THEN 'S'
-						ELSE 'F'
-					END AS [Status],
-					@Message AS [Message]
+		SET @Result = @Result + '''' + @TargetDirectory + '\' + @TableName + '_' + @DTNow +
+				CASE 
+					WHEN @ID = (SELECT MAX(RN) FROM #tmp) 
+						THEN '.csv''' 
+					ELSE '.csv'',' 
+				END 	
+
+		EXEC mngmt.ExecutionLogs_Insert 'MSSQL-BCP', @DatabaseName, @SchemaName, @TableName, @TargetDirectory, @FileName, @Status, @Message
 
 		DELETE FROM #tmp WHERE RN = @ID;
 	END
