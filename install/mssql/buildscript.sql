@@ -146,14 +146,15 @@ BEGIN TRY
 		DELETE FROM #tmp WHERE RN = @ID;
 	END
 
-	SELECT '(' + ISNULL(@Result,'#NA') + ')' AS Result
+	SELECT '(' + ISNULL(@Result,'No .csv files generated') + ')' AS Result
 
 END TRY
 
 BEGIN CATCH
 
 	SELECT 
-		  'Error_Number' + CAST(ERROR_NUMBER() AS VARCHAR(9))
+		'MSSQL error, details:'
+		+ '  Error_Number' + CAST(ERROR_NUMBER() AS VARCHAR(9))
 		+ '; Error_Severity:' + CAST(ERROR_SEVERITY() AS VARCHAR(9))
 		+ '; Error_State:' + CAST(ERROR_STATE() AS VARCHAR(9))
 		+ '; Error_Procedure:' + ERROR_PROCEDURE() 
