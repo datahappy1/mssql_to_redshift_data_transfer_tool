@@ -60,7 +60,8 @@ GO
 CREATE PROCEDURE mngmt.Extract_Filter_BCP (	
   @DatabaseName VARCHAR(128), 
   @SchemaName VARCHAR(128),  
-  @TargetDirectory VARCHAR(255)
+  @TargetDirectory VARCHAR(255),
+  @Result VARCHAR(MAX) = '' OUTPUT
 )
 AS
 
@@ -74,7 +75,6 @@ BEGIN TRY
 	DECLARE @BCPCommand VARCHAR(4000);
 	DECLARE @Message VARCHAR(MAX);
 	DECLARE @DTNow CHAR(19) = FORMAT(GetDate(), 'yyyy_MM_dd_HH_mm_ss')
-	DECLARE @Files VARCHAR(MAX) = '';
 
 	---------------------
 	--Execution:
@@ -114,7 +114,7 @@ BEGIN TRY
 		ORDER BY RN;
  
 		SELECT @BCPCommand =
-		'BCP "SELECT ' + @ColumnNamesSerialized + ' FROM ' + @DatabaseName + '.' + @SchemaName + '.' + @TableName +'" queryout ' + @TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv -c -t, -T -S' + @@servername;
+		'BCP "SELECT ' + @ColumnNamesSerialized + ' FROM ' + @DatabaseName + '.' + @SchemaName + '.' + @TableName +' WHERE 1=0" queryout ' + @TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv -c -t, -T -S' + @@servername;
 	
 		DECLARE @BCPOutput TABLE (id INT IDENTITY, command NVARCHAR(256))
 
@@ -123,7 +123,7 @@ BEGIN TRY
 
 		SET @Message =	(SELECT command FROM @BCPOutput WHERE id = (SELECT MAX(id) - 3 FROM @BCPOutput));
 
-		SET @Files = @Files + '''' + @TargetDirectory + '\' + @TableName + '_' + @DTNow 
+		SET @Result = @Result + '''' + @TargetDirectory + '\' + @TableName + '_' + @DTNow 
 					  +	CASE 
 							WHEN @ID = (SELECT MAX(RN) FROM #tmp) THEN '.csv''' 
 						ELSE '.csv'',' 
@@ -146,19 +146,20 @@ BEGIN TRY
 		DELETE FROM #tmp WHERE RN = @ID;
 	END
 
-	SELECT '(' + ISNULL(@Files,'#NA') + ')' AS Files
+	SELECT '(' + ISNULL(@Result,'#NA') + ')' AS Result
 
 END TRY
 
 BEGIN CATCH
 
 	SELECT 
-		 ERROR_NUMBER() AS ErrorNumber
-		,ERROR_SEVERITY() AS ErrorSeverity
-		,ERROR_STATE() AS ErrorState
-		,ERROR_PROCEDURE() AS ErrorProcedure
-		,ERROR_LINE() AS ErrorLine
-		,ERROR_MESSAGE() AS ErrorMessage;
+		  'Error_Number' + CAST(ERROR_NUMBER() AS VARCHAR(9))
+		+ '; Error_Severity:' + CAST(ERROR_SEVERITY() AS VARCHAR(9))
+		+ '; Error_State:' + CAST(ERROR_STATE() AS VARCHAR(9))
+		+ '; Error_Procedure:' + ERROR_PROCEDURE() 
+		+ '; Error_Line:' + CAST(ERROR_LINE() AS VARCHAR(9))
+		+ '; Error_Message:' + ERROR_MESSAGE()
+		AS Result;
 
 END CATCH
 
