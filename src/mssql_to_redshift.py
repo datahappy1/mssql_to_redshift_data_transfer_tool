@@ -92,14 +92,14 @@ def main(databasename, schemaname, targetdirectory, dryrun):
 
     files = utils.str_split(ret)
 
-    logging.info(f'Upload of the .csv files to the S3 bucket location {settings.S3_BUCKETNAME} '
-                 f'/ {settings.S3_TARGETDIR} started')
+    logging.info(f'Upload of the .csv files to the S3 bucket location {settings.S3_BUCKETNAME}/{settings.S3_TARGETDIR} '
+                 f'started')
 
     for filename in files:
         if bool(dryrun):
-            print('s3 copy dryrun ' + filename)
+            logging.info(f's3 copy dryrun {filename}')
         else:
-            print('s3 copy ' + filename)
+            logging.info(f's3 copy {filename}')
 
         mssql.StoredProc.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.S3_BUCKETNAME + '/'
                                        + settings.S3_TARGETDIR, filename.strip("'"), 'S', 'file '
