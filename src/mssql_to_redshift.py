@@ -18,14 +18,23 @@ def prepare_args():
     parser.add_argument('-dn', '--databasename', type=str, required=True)
     parser.add_argument('-sn', '--schemaname', type=str, required=True)
     parser.add_argument('-td', '--targetdirectory', type=str, required=True)
-    parser.add_argument('-dr', '--dryrun', type=bool, required=False, default=1)
+    parser.add_argument('-dr', '--dryrun', type=str, required=True)
     parsed = parser.parse_args()
 
     databasename = parsed.databasename
     schemaname = parsed.schemaname
+
     targetdirectory = parsed.targetdirectory
     targetdirectory = targetdirectory.replace('\f', '\\f')
+
     dryrun = parsed.dryrun
+    if dryrun.lower() in ('yes', 'true', 't', 'y', '1'):
+        dryrun = True
+    elif dryrun.lower() in ('no', 'false', 'f', 'n', '0'):
+        dryrun = False
+    else:
+        logging.error(f'Argument dryrun needs to be convertible to boolean')
+        sys.exit(1)
 
     main(databasename, schemaname, targetdirectory, dryrun)
 
@@ -88,7 +97,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
 
     for filename in files:
         if bool(dryrun):
-            print('s3 copy dryrun' + filename)
+            print('s3 copy dryrun ' + filename)
         else:
             print('s3 copy ' + filename)
 
