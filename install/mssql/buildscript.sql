@@ -110,6 +110,7 @@ CREATE PROCEDURE mngmt.Extract_Filter_BCP (
   @DatabaseName VARCHAR(128), 
   @SchemaName VARCHAR(128),  
   @TargetDirectory VARCHAR(255),
+  @DryRun BIT,
   @Result VARCHAR(MAX) = '' OUTPUT
 )
 AS
@@ -126,6 +127,7 @@ BEGIN TRY
 	DECLARE @DTNow CHAR(19) = FORMAT(GetDate(), 'yyyy_MM_dd_HH_mm_ss')
 	DECLARE @Status CHAR(1);
 	DECLARE @FileName VARCHAR(300);
+	DECLARE @DryRunQuery VARCHAR(10) = '';
 
 	---------------------
 	--Execution:
@@ -165,9 +167,14 @@ BEGIN TRY
 		ORDER BY RN;
  
 		SET @FileName = @TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv';
-
+		
+		IF @DryRun = 1
+		BEGIN
+			SET @DryRunQuery = ' WHERE 1=0' 
+		END
+		
 		SELECT @BCPCommand =
-		'BCP "SELECT ' + @ColumnNamesSerialized + ' FROM ' + @DatabaseName + '.' + @SchemaName + '.' + @TableName +' WHERE 1=0" queryout ' + @FileName + ' -c -t, -T -S' + @@servername;
+		'BCP "SELECT ' + @ColumnNamesSerialized + ' FROM ' + @DatabaseName + '.' + @SchemaName + '.' + @TableName + @DryRunQuery + ' " queryout ' + @FileName + ' -c -t, -T -S' + @@servername;
 	
 		DECLARE @BCPOutput TABLE (id INT IDENTITY, command NVARCHAR(256))
 
@@ -177,17 +184,17 @@ BEGIN TRY
 		SET @Message =	(SELECT command FROM @BCPOutput WHERE id = (SELECT MAX(id) - 3 FROM @BCPOutput));
 
 		SET @Status =	CASE 
-					WHEN @Message LIKE '% rows copied.' 
-						THEN 'S'
-					ELSE 'F'
-				END;
+							WHEN @Message LIKE '% rows copied.' 
+								THEN 'S'
+							ELSE 'F'
+						END;
 
-		SET @Result = @Result + '''' + @TargetDirectory + '\' + @TableName + '_' + @DTNow +
-				CASE 
-					WHEN @ID = (SELECT MAX(RN) FROM #tmp) 
-						THEN '.csv''' 
-					ELSE '.csv'',' 
-				END 	
+		SET @Result = @Result + '''' + @TargetDirectory + '\' + @TableName + '_' + @DTNow 
+					  +	CASE 
+							WHEN @ID = (SELECT MAX(RN) FROM #tmp) 
+								THEN '.csv''' 
+							ELSE '.csv'',' 
+						END 	
 
 		EXEC mngmt.ExecutionLogs_Insert 'MSSQL-BCP', @DatabaseName, @SchemaName, @TableName, @TargetDirectory, @FileName, @Status, @Message
 
@@ -201,7 +208,7 @@ END TRY
 BEGIN CATCH
 
 	SELECT 
-		'MSSQL error, details:'
+			'MSSQL error, details:'
 		+ '  Error_Number' + CAST(ERROR_NUMBER() AS VARCHAR(9))
 		+ '; Error_Severity:' + CAST(ERROR_SEVERITY() AS VARCHAR(9))
 		+ '; Error_State:' + CAST(ERROR_STATE() AS VARCHAR(9))
