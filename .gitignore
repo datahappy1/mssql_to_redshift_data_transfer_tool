@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/
 lib64/
 parts/
 sdist/
@@ -104,4 +104,4 @@ venv.bak/
 .mypy_cache/
 
 # settings.py
-/src/settings.py
+src/settings.py
