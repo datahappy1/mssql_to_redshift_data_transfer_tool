@@ -1,0 +1,4 @@
+1) set SQL Server to mixed authentication mode
+2) reboot the SQL Server service
+3) create a SQL login with password
+4) tie this login with the DB MSSQL_to_Redshift as admin

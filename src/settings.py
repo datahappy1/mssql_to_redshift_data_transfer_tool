@@ -1,0 +1,13 @@
+MSSQL_HOST = r'127.0.0.1:1433\SQLEXPRESS'
+MSSQL_PORT = 1433
+MSSQL_DB = 'MSSQL_to_Redshift'
+MSSQL_USER = 'migrator'
+MSSQL_PASS = 'password'
+AWS_ACCESS_KEY_ID = 'aaaaaaaaaaaa'
+AWS_SECRET_ACCESS_KEY = 'bbbbbbbbbbbb'
+S3_BUCKETNAME = 's3buck'
+S3_TARGETDIR = 'files_for_redshift'
+REDSHIFT_HOST = 'accz'
+REDSHIFT_DB = 'rs'
+REDSHIFT_USER = 'usrred'
+REDSHIFT_PASS = 'password'
