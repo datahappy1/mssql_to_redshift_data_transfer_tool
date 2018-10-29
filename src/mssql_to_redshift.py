@@ -96,15 +96,15 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     for filename in files:
         filename = filename.strip("'")
         fs = os.path.getsize(filename)
-        # check that the filesize in MB is not greater than settings.CSV_MAX_FILESIZE
-        if fs / 1048576 > settings.CSV_MAX_FILESIZE:
-            logging.error(f'The file {filename} has filesize {str(fs)} MB and that is larger than CSV_MAX_FILESIZE'
+        # check that the filesize in MB is not greater than settings.csv_max_filesize
+        if fs / 1048576 > settings.csv_max_filesize:
+            logging.error(f'The file {filename} has filesize {str(fs)} MB and that is larger than csv_max_filesize'
                           f'set in settings.py')
             sys.exit(1)
         else:
             pass
 
-    logging.info(f'Upload of the .csv files to the S3 bucket location {settings.S3_BUCKETNAME}/{settings.S3_TARGETDIR} '
+    logging.info(f'Upload of the .csv files to the S3 bucket location {settings.s3_bucketname}/{settings.s3_targetdir} '
                  f'started')
 
     for filename in files:
@@ -113,11 +113,11 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         else:
             logging.info(f's3 copy {filename}')
 
-        mssql.StoredProc.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.S3_BUCKETNAME + '/'
-                                       + settings.S3_TARGETDIR, filename.strip("'"), 'S', 'file '
+        mssql.StoredProc.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
+                                       + settings.s3_targetdir, filename.strip("'"), 'S', 'file '
                                        + filename.strip("'") + ' copied to S3 bucket')
 
-    logging.info(f'Upload of the .csv files to the S3 bucket location {settings.S3_BUCKETNAME}/{settings.S3_TARGETDIR} '
+    logging.info(f'Upload of the .csv files to the S3 bucket location {settings.s3_bucketname}/{settings.s3_targetdir} '
                  f'finished')
 
     ###########################################################################
@@ -130,8 +130,8 @@ def main(databasename, schemaname, targetdirectory, dryrun):
 
     # https://stackoverflow.com/questions/51130199/redshift-copy-csv-in-s3-using-python
     # files = utils.str_split(ret)
-    # mssql.StoredProc.write_log_row('RS COPY', databasename, schemaname, '#N/A', settings.S3_BUCKETNAME + '/'
-    #                                + settings.S3_TARGETDIR, filename.strip("'"), 'S', 'file '
+    # mssql.StoredProc.write_log_row('RS COPY', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
+    #                                + settings.s3_targetdir, filename.strip("'"), 'S', 'file '
     #                                + filename.strip("'") + ' copied to Redshift')
 
     ###########################################################################
