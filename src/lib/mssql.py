@@ -17,8 +17,6 @@ class General:
             mssql_user = env_var_json["mssql_user"]
             mssql_pass = env_var_json["mssql_pass"]
 
-            # print(mssql_host+mssql_port+mssql_user+mssql_pass)
-
             conn = pymssql.connect(server=mssql_host,
                                    port=mssql_port,
                                    user=mssql_user,
