@@ -96,7 +96,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     for filename in files:
         filename = filename.strip("'")
         fs = os.path.getsize(filename)
-        # check that the filesize in MB is < settings.CSV_MAX_FILESIZE
+        # check that the filesize in MB is not greater than settings.CSV_MAX_FILESIZE
         if fs / 1048576 > settings.CSV_MAX_FILESIZE:
             logging.error(f'The file {filename} has filesize {str(fs)} MB and that is larger than CSV_MAX_FILESIZE'
                           f'set in settings.py')
