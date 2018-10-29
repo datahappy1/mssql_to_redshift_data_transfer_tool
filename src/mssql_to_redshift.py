@@ -28,6 +28,7 @@ def prepare_args():
     targetdirectory = targetdirectory.replace('\f', '\\f')
 
     dryrun = parsed.dryrun
+    # argparse bool datatype known bug workaround
     if dryrun.lower() in ('yes', 'true', 't', 'y', '1'):
         dryrun = True
     elif dryrun.lower() in ('no', 'false', 'f', 'n', '0'):
@@ -87,10 +88,21 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         logging.info(f'Generating .csv files finished')
 
     ###########################################################################
-    # 4: copy the generated files to S3 and write log rows
+    # 4: check the .csv filesize and copy the generated files to S3 and write log rows
     ###########################################################################
 
     files = utils.str_split(ret)
+
+    for filename in files:
+        filename = filename.strip("'")
+        fs = os.path.getsize(filename)
+        # check that the filesize in MB is < settings.CSV_MAX_FILESIZE
+        if fs / 1048576 > settings.CSV_MAX_FILESIZE:
+            logging.error(f'The file {filename} has filesize {str(fs)} MB and that is larger than CSV_MAX_FILESIZE'
+                          f'set in settings.py')
+            sys.exit(1)
+        else:
+            pass
 
     logging.info(f'Upload of the .csv files to the S3 bucket location {settings.S3_BUCKETNAME}/{settings.S3_TARGETDIR} '
                  f'started')
