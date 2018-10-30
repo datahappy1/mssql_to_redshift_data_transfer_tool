@@ -43,7 +43,7 @@ def prepare_args():
 def main(databasename, schemaname, targetdirectory, dryrun):
     # set logging levels for console
     logging.getLogger().setLevel(logging.INFO)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("botocore").setLevel(logging.WARNING)
 
     # additional variables preparations
 
@@ -119,11 +119,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         if bool(dryrun):
             logging.info(f's3 copy dryrun {filename}')
         else:
-            urllib3 = logging.getLogger('urllib3')
-            urllib3.setLevel(logging.ERROR)
-
             aws.s3.upload(fullfilename, filename)
-            logging.info(f's3 uploading {filename}')
 
         mssql.StoredProc.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
                                        + settings.s3_targetdir, filename, 'S', 'file ' + filename
