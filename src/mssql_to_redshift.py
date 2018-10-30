@@ -7,7 +7,6 @@ from src import settings
 from src.lib import mssql
 from src.lib import aws
 from src.lib import utils
-from time import sleep
 
 
 def prepare_args():
@@ -91,7 +90,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         logging.info(f'Generating .csv files finished')
 
     ###########################################################################
-    # 4: check the .csv filesize , init S3 and copy the generated files to S3 and write log rows
+    # 4: check the .csv filesize
     ###########################################################################
 
     files = utils.str_split(ret)
@@ -107,8 +106,16 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         else:
             pass
 
+    ###########################################################################
+    # 5: init AWS S3
+    ###########################################################################
+
     aws.S3.init()
     logging.info(f'AWS S3 connection initiated')
+
+    ###########################################################################
+    # 6: upload csv files to S3
+    ###########################################################################
 
     logging.info(f'Upload of the .csv files to the S3 bucket location {settings.s3_bucketname}/{settings.s3_targetdir} '
                  f'started')
@@ -121,9 +128,6 @@ def main(databasename, schemaname, targetdirectory, dryrun):
             logging.info(f's3 copy dryrun {filename}')
         else:
             aws.S3.upload(fullfilename, filename)
-            sleep(0.1)
-            aws.RedShift.copy(filename)
-
 
         mssql.StoredProc.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
                                        + settings.s3_targetdir, filename, 'S', 'file ' + filename
@@ -133,25 +137,43 @@ def main(databasename, schemaname, targetdirectory, dryrun):
                  f'finished')
 
     ###########################################################################
-    # 5: init connect to AWS Redshift
+    # 5: init AWS Redshift
     ###########################################################################
 
-    ###########################################################################
-    # 6: run Redshift COPY commands and write log rows
-    ###########################################################################
-
-    # https://stackoverflow.com/questions/51130199/redshift-copy-csv-in-s3-using-python
-    # files = utils.str_split(ret)
-    # mssql.StoredProc.write_log_row('RS COPY', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
-    #                                + settings.s3_targetdir, filename.strip("'"), 'S', 'file '
-    #                                + filename.strip("'") + ' copied to Redshift')
+    aws.Redshift.init()
+    logging.info(f'AWS Redshift connection initiated')
 
     ###########################################################################
-    # 7: close connections and cleanup files, query and list the log values
+    # 6: run Redshift COPY commands
+    ###########################################################################
+
+    for filename in files:
+        fullfilename = filename.strip("'")
+        filename = fullfilename.rsplit('\\', 1)[1]
+
+        # TODO AWS Redshift tablename equals filename without the .csv extension
+        tablename = filename.strip('.csv')
+
+        if bool(dryrun):
+            logging.info(f'dryrun copy {tablename} {filename} from s3://{settings.s3_bucketname}')
+        else:
+            aws.RedShift.copy(tablename, filename)
+
+        mssql.StoredProc.write_log_row('RS UPLOAD', databasename, schemaname, tablename, settings.s3_bucketname + '/'
+                                       + settings.s3_targetdir, filename, 'S', 'file ' + filename
+                                       + ' copied to a Redshift table ' + tablename + ' from the S3 bucket')
+
+    logging.info(f'Copy of the .csv files to the AWS Redshift cluster finished')
+
+    ###########################################################################
+    # 7: close connections
     ###########################################################################
 
     mssql.General.init().close()
-    logging.info(f'MSSQL Connection closed')
+    logging.info(f'MSSQL connection closed')
+
+    aws.Redshift.init().close()
+    logging.info(f'AWS Redshift connection closed')
 
 
 if __name__ == "__main__":

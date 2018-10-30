@@ -18,9 +18,9 @@ class S3:
             aws_access_key_id = env_var_json["aws_access_key_id"]
             aws_secret_access_key = env_var_json["aws_secret_access_key"]
 
-            client = boto3.client('s3', aws_access_key_id=aws_access_key_id,
-                                  aws_secret_access_key=aws_secret_access_key)
-            return client
+            #client = boto3.client('s3', aws_access_key_id=aws_access_key_id,
+            #                      aws_secret_access_key=aws_secret_access_key)
+            #return client
         except Boto3Error:
             logging.error('AWS S3 connection failed, Boto3Error')
             sys.exit(1)
@@ -31,10 +31,10 @@ class S3:
             bucketname = s3_bucketname
             targetdir = s3_targetdir
 
-            client = S3.init()
+            #client = S3.init()
 
-            transfer = S3Transfer(client)
-            transfer.upload_file(fullfilename, bucketname, targetdir + "/" + filename)
+            #transfer = S3Transfer(client)
+            #transfer.upload_file(fullfilename, bucketname, targetdir + "/" + filename)
             logging.info(f'File {filename} uploaded successfully, target bucket: {bucketname}, '
                          f'target folder: {targetdir}')
         except S3UploadFailedError:
@@ -46,26 +46,42 @@ class RedShift:
     @staticmethod
     def init():
         try:
-            conn = psycopg2.connect(dbname='**_dev_**', host='888888888888****.u.****.redshift.amazonaws.com', port='5439',
-                                    user='******', password='********')
-            return conn
+            env_var_json = json.loads(env_vars())
+
+            redshift_host = env_var_json["redshift_host"]
+            redshift_port = env_var_json["redshift_port"]
+            redshift_db = env_var_json["redshift_db"]
+            redshift_user = env_var_json["redshift_user"]
+            redshift_pass = env_var_json["redshift_pass"]
+
+            #conn = psycopg2.connect(dbname=redshift_db, host=redshift_host, port=redshift_port,
+            #                        user=redshift_user, password=redshift_pass)
+            #return conn
         except ConnectionError:
             logging.error('AWS Redshift connection failed, ConnectionError')
             sys.exit(1)
 
     @staticmethod
-    def copy(filename):
-        RedShift.init()
+    def copy(tablename, filename):
+        try:
+            RedShift.init()
 
-        cur = RedShift.init().cursor()
-        cur.execute("begin;")
+            env_var_json = json.loads(env_vars())
+            aws_access_key_id = env_var_json["aws_access_key_id"]
+            aws_secret_access_key = env_var_json["aws_secret_access_key"]
 
-        copy_redshift_string = 'copy ' + filename + 'from s3://' + s3_bucketname + 'credentials ' + ' csv;'
-        #cur.execute(copy_redshift_string)
+            #cur = RedShift.init().cursor()
+            #cur.execute("begin;")
 
-        cur.execute("copy kpi_kpireport from 's3://clab-migration/kpi.csv' credentials 'aws_access_key_id=ID;aws_secret_access_key=KEY/KEY/pL/KEY' csv;")
+            copy_redshift_string = 'copy ' + tablename + 'from s3://' + s3_bucketname + '/' + filename + 'credentials ' \
+                                   + 'aws_access_key_id=' + aws_access_key_id + '; aws_secret_access_key=' \
+                                   + aws_secret_access_key + ' csv;'
+            #cur.execute(copy_redshift_string)
+            #cur.execute("copy kpi_kpireport from 's3://clab-migration/kpi.csv' credentials 'aws_access_key_id=ID;aws_secret_access_key=KEY/KEY/pL/KEY' csv;")
 
-        cur.execute("commit;")
-
-        print("Copy executed fine!")
+            print(copy_redshift_string)
+            #cur.execute("commit;")
+        except ConnectionError:
+            logging.error('AWS Redshift copy command failed, ConnectionError')
+            sys.exit(1)
 
