@@ -7,6 +7,7 @@ from src import settings
 from src.lib import mssql
 from src.lib import aws
 from src.lib import utils
+from time import sleep
 
 
 def prepare_args():
@@ -119,7 +120,10 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         if bool(dryrun):
             logging.info(f's3 copy dryrun {filename}')
         else:
-            aws.s3.upload(fullfilename, filename)
+            aws.S3.upload(fullfilename, filename)
+            sleep(0.1)
+            aws.RedShift.copy(filename)
+
 
         mssql.StoredProc.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
                                        + settings.s3_targetdir, filename, 'S', 'file ' + filename
