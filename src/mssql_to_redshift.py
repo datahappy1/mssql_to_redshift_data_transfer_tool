@@ -140,7 +140,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     # 5: init AWS Redshift
     ###########################################################################
 
-    aws.Redshift.init()
+    aws.RedShift.init()
     logging.info(f'AWS Redshift connection initiated')
 
     ###########################################################################
@@ -151,8 +151,8 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         fullfilename = filename.strip("'")
         filename = fullfilename.rsplit('\\', 1)[1]
 
-        # TODO AWS Redshift tablename equals filename without the .csv extension
-        tablename = filename.strip('.csv')
+        # TODO AWS Redshift tablename equals filename without the .csv extension and the timestamp
+        tablename = filename[0:(len(filename)-24)].rstrip('.csv')
 
         if bool(dryrun):
             logging.info(f'dryrun copy {tablename} {filename} from s3://{settings.s3_bucketname}')
@@ -172,7 +172,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     mssql.General.init().close()
     logging.info(f'MSSQL connection closed')
 
-    aws.Redshift.init().close()
+    aws.RedShift.init().close()
     logging.info(f'AWS Redshift connection closed')
 
 
