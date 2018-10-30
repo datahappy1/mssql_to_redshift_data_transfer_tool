@@ -128,10 +128,9 @@ def main(databasename, schemaname, targetdirectory, dryrun):
             logging.info(f's3 copy dryrun {filename}')
         else:
             aws.S3.upload(fullfilename, filename)
-
-        mssql.StoredProc.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
-                                       + settings.s3_targetdir, filename, 'S', 'file ' + filename
-                                       + ' copied to S3 bucket')
+            mssql.StoredProc.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
+                                           + settings.s3_targetdir, filename, 'S', 'file ' + filename
+                                           + ' copied to S3 bucket')
 
     logging.info(f'Upload of the .csv files to the S3 bucket location {settings.s3_bucketname}/{settings.s3_targetdir} '
                  f'finished')
@@ -152,16 +151,15 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         filename = fullfilename.rsplit('\\', 1)[1]
 
         # TODO AWS Redshift tablename equals filename without the .csv extension and the timestamp
-        tablename = filename[0:(len(filename)-24)].rstrip('.csv')
+        tablename = filename[0:(len(filename)-24)]
 
         if bool(dryrun):
             logging.info(f'dryrun copy {tablename} {filename} from s3://{settings.s3_bucketname}')
         else:
             aws.RedShift.copy(tablename, filename)
-
-        mssql.StoredProc.write_log_row('RS UPLOAD', databasename, schemaname, tablename, settings.s3_bucketname + '/'
-                                       + settings.s3_targetdir, filename, 'S', 'file ' + filename
-                                       + ' copied to a Redshift table ' + tablename + ' from the S3 bucket')
+            mssql.StoredProc.write_log_row('RS UPLOAD', databasename, schemaname, tablename, settings.s3_bucketname + '/'
+                                           + settings.s3_targetdir, filename, 'S', 'file ' + filename
+                                           + ' copied to a Redshift table ' + tablename + ' from the S3 bucket')
 
     logging.info(f'Copy of the .csv files to the AWS Redshift cluster finished')
 
