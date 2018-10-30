@@ -3,12 +3,13 @@ from boto3.exceptions import Boto3Error, S3UploadFailedError
 from src.settings import s3_bucketname, s3_targetdir
 from src.lib.utils import env_vars
 import boto3
+import psycopg2
 import logging
 import json
 import sys
 
 
-class s3:
+class S3:
     @staticmethod
     def init():
         try:
@@ -30,12 +31,41 @@ class s3:
             bucketname = s3_bucketname
             targetdir = s3_targetdir
 
-            client = s3.init()
+            client = S3.init()
 
             transfer = S3Transfer(client)
             transfer.upload_file(fullfilename, bucketname, targetdir + "/" + filename)
-            logging.info(f'File {filename} uploaded successfully, , target bucket: {bucketname}, '
+            logging.info(f'File {filename} uploaded successfully, target bucket: {bucketname}, '
                          f'target folder: {targetdir}')
         except S3UploadFailedError:
             logging.error('AWS S3 upload failed, S3UploadFailedError')
             sys.exit(1)
+
+
+class RedShift:
+    @staticmethod
+    def init():
+        try:
+            conn = psycopg2.connect(dbname='**_dev_**', host='888888888888****.u.****.redshift.amazonaws.com', port='5439',
+                                    user='******', password='********')
+            return conn
+        except ConnectionError:
+            logging.error('AWS Redshift connection failed, ConnectionError')
+            sys.exit(1)
+
+    @staticmethod
+    def copy(filename):
+        RedShift.init()
+
+        cur = RedShift.init().cursor()
+        cur.execute("begin;")
+
+        copy_redshift_string = 'copy ' + filename + 'from s3://' + s3_bucketname + 'credentials ' + ' csv;'
+        #cur.execute(copy_redshift_string)
+
+        cur.execute("copy kpi_kpireport from 's3://clab-migration/kpi.csv' credentials 'aws_access_key_id=ID;aws_secret_access_key=KEY/KEY/pL/KEY' csv;")
+
+        cur.execute("commit;")
+
+        print("Copy executed fine!")
+
