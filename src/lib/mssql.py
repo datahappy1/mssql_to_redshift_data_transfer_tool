@@ -24,7 +24,6 @@ class General:
                                    database=mssql_db,
                                    autocommit=True)
             return conn
-            logging.info(f'SQL Server connection initiated')
         except ConnectionError:
             logging.error('SQL Server connection failed, ConnectionError')
             sys.exit(1)

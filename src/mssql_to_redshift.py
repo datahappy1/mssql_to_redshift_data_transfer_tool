@@ -43,6 +43,7 @@ def prepare_args():
 def main(databasename, schemaname, targetdirectory, dryrun):
     # set logging levels for console
     logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
 
     # additional variables preparations
 
@@ -51,6 +52,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     ###########################################################################
 
     mssql.General.init()
+    logging.info(f'SQL Server connection initiated')
 
     ###########################################################################
     # 2: create a working folder for the .csv files
@@ -88,7 +90,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         logging.info(f'Generating .csv files finished')
 
     ###########################################################################
-    # 4: check the .csv filesize and copy the generated files to S3 and write log rows
+    # 4: check the .csv filesize , init S3 and copy the generated files to S3 and write log rows
     ###########################################################################
 
     files = utils.str_split(ret)
@@ -104,18 +106,28 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         else:
             pass
 
+    aws.s3.init()
+    logging.info(f'AWS S3 connection initiated')
+
     logging.info(f'Upload of the .csv files to the S3 bucket location {settings.s3_bucketname}/{settings.s3_targetdir} '
                  f'started')
 
     for filename in files:
+        fullfilename = filename.strip("'")
+        filename = fullfilename.rsplit('\\', 1)[1]
+
         if bool(dryrun):
             logging.info(f's3 copy dryrun {filename}')
         else:
-            logging.info(f's3 copy {filename}')
+            urllib3 = logging.getLogger('urllib3')
+            urllib3.setLevel(logging.ERROR)
+
+            aws.s3.upload(fullfilename, filename)
+            logging.info(f's3 uploading {filename}')
 
         mssql.StoredProc.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
-                                       + settings.s3_targetdir, filename.strip("'"), 'S', 'file '
-                                       + filename.strip("'") + ' copied to S3 bucket')
+                                       + settings.s3_targetdir, filename, 'S', 'file ' + filename
+                                       + ' copied to S3 bucket')
 
     logging.info(f'Upload of the .csv files to the S3 bucket location {settings.s3_bucketname}/{settings.s3_targetdir} '
                  f'finished')
