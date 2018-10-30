@@ -107,7 +107,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         else:
             pass
 
-    aws.s3.init()
+    aws.S3.init()
     logging.info(f'AWS S3 connection initiated')
 
     logging.info(f'Upload of the .csv files to the S3 bucket location {settings.s3_bucketname}/{settings.s3_targetdir} '
