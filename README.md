@@ -59,7 +59,7 @@ A permanent solution is to:<br />
 
 
 #### Pytest testing:<br />
-Pytest (version 3.9.1) unit, integration and performance tests are also a part of this tool.
+Pytest (version 3.9.1) integration and connectivity tests are also a part of this tool.
 To make sure you're working with a healthy version, install Pytest running `pip install pytest`<br /> 
 ( Alternatively you can run the command `pip install -r requirements.txt` to install Pytest )<br />
 <br />
