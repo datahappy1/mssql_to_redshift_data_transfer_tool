@@ -5,7 +5,7 @@ This tool is able to migrate data from your MSSQL Database to AWS Redshift.
 It consumes arguments defining: 
 - databasename (the name of the database with the tables in MSSQL you wish to migrate over, this argument needs to be aligned with the values in the column DatabaseName inside the configuration table MSSQL_to_Redshift.mngmt.ControlTable )
 - schemaname (the name of the database schema with the tables in MSSQL you wish to migrate over, this argument needs to be aligned with the values in the column SchemaName inside the configuration table MSSQL_to_Redshift.mngmt.ControlTable )
-- targetdirectory (the local folder where you wish to store your .csv files)
+- targetdirectory (the local folder where you wish to store your .csv files, if the folder not exists, it will be created for you during the runtime)
 - dryrun (True | False,this argument let's you run a dryrun for testing of the redshift copy commands)
 
 [How this tool works](#how-this-tool-works)
@@ -27,7 +27,18 @@ It consumes arguments defining:
 ### To install:
 `git clone https://www.github.com/datahappy1/mssql_to_redshift_data_transfer_tool mssql_to_redshift_data_transfer_tool` <br />
 <br />
-Follow the instructions in notes.txt files from the https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/tree/master/install subfolders  
+#### Securables ( hostnames, usernames, passwords etc. ) :
+Follow the instructions in notes.txt files from:
+https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/tree/master/install/securables
+
+#### MSSQL:
+Run the buildscript.sql 
+Follow the instructions in notes.txt files from:
+https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/tree/master/install/mssql
+
+#### AWS:
+Follow the instructions in notes.txt files from: 
+https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/tree/master/install/aws
 <br />
 
 #### On Windows:<br />
