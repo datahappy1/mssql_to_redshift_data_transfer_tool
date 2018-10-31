@@ -1,0 +1,2 @@
+1) Setup your AWS IAM user with policies allowing you to access your S3 bucket
+ and your Redshift cluster, use the keys as described in the securables part of the installation

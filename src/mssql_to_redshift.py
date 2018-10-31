@@ -46,6 +46,12 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     logging.getLogger().setLevel(logging.INFO)
     logging.getLogger("botocore").setLevel(logging.WARNING)
 
+    # variables preparation
+    if bool(dryrun):
+        dryrunloggingstringprefix = 'Dryrun '
+    else:
+        dryrunloggingstringprefix = ''
+
     ####################################################################################################################
     # 1: init MSSQL
     ####################################################################################################################
@@ -73,7 +79,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     # 3: execute the mngmt.Extract_Filter_BCP MSSQL Stored Procedure with pymssql
     ####################################################################################################################
 
-    logging.info(f'Generating .csv files started')
+    logging.info(f'{dryrunloggingstringprefix}Generating .csv files started')
     ret = mssql.StoredProc.run_extract_filter_bcp(databasename, schemaname, targetdirectory, dryrun)
 
     if "MSSQL error, details:" in ret:
@@ -116,23 +122,23 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     # 6: upload csv files to S3
     ####################################################################################################################
 
-    logging.info(f'Upload of the .csv files to the S3 bucket location {settings.s3_bucketname}/{settings.s3_targetdir} '
-                 f'started')
+    logging.info(f'{dryrunloggingstringprefix}Upload of the .csv files to the S3 bucket location '
+                 f'{settings.s3_bucketname}/{settings.s3_targetdir} started')
 
     for filename in files:
         fullfilename = filename.strip("'")
         filename = fullfilename.rsplit('\\', 1)[1]
 
         if bool(dryrun):
-            logging.info(f's3 copy dryrun {filename}')
+            logging.info(f'{dryrunLoggingStringPrefix}S3 copy {filename}')
         else:
             aws.S3.upload(fullfilename, filename)
             mssql.StoredProc.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
                                            + settings.s3_targetdir, filename, 'S', 'file ' + filename
                                            + ' copied to S3 bucket')
 
-    logging.info(f'Upload of the .csv files to the S3 bucket location {settings.s3_bucketname}/{settings.s3_targetdir} '
-                 f'finished')
+    logging.info(f'{dryrunloggingstringprefix}Upload of the .csv files to the S3 bucket location '
+                 f'{settings.s3_bucketname}/{settings.s3_targetdir} finished')
 
     ####################################################################################################################
     # 7: init AWS Redshift
@@ -145,7 +151,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     # 8: run Redshift COPY commands
     ####################################################################################################################
 
-    logging.info(f'Copy of the .csv files to the AWS Redshift cluster started')
+    logging.info(f'{dryrunloggingstringprefix}Copy of the .csv files to the AWS Redshift cluster started')
 
     for filename in files:
         fullfilename = filename.strip("'")
@@ -155,14 +161,14 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         tablename = filename[0:(len(filename)-24)]
 
         if bool(dryrun):
-            logging.info(f'dryrun copy {tablename} {filename} from s3://{settings.s3_bucketname}')
+            logging.info(f'{dryrunloggingstringprefix} copy {tablename} {filename} from s3://{settings.s3_bucketname}')
         else:
             aws.RedShift.copy(tablename, filename)
             mssql.StoredProc.write_log_row('RS UPLOAD', databasename, schemaname, tablename, settings.s3_bucketname + '/'
                                            + settings.s3_targetdir, filename, 'S', 'file ' + filename
                                            + ' copied to a Redshift table ' + tablename + ' from the S3 bucket')
 
-    logging.info(f'Copy of the .csv files to the AWS Redshift cluster finished')
+    logging.info(f'{dryrunloggingstringprefix}Copy of the .csv files to the AWS Redshift cluster finished')
 
     ####################################################################################################################
     # 9: close connections
