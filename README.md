@@ -28,20 +28,19 @@ It consumes arguments defining:
 `git clone https://www.github.com/datahappy1/mssql_to_redshift_data_transfer_tool mssql_to_redshift_data_transfer_tool` <br />
 <br />
 #### Securables ( hostnames, usernames, passwords etc. ) :
-Follow the instructions in notes.txt files from:
+Follow the instructions in notes.txt files from:<br />
 https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/tree/master/install/securables
 
 #### MSSQL:
-Run the buildscript.sql 
-Follow the instructions in notes.txt files from:
+Run the database build using buildscript.sql and then follow the instructions in notes.txt files from:<br />
 https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/tree/master/install/mssql
 
 #### AWS:
-Follow the instructions in notes.txt files from: 
+Follow the instructions in notes.txt files from:<br /> 
 https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/tree/master/install/aws
 <br />
 
-#### On Windows:<br />
+### First run on Windows:<br />
 
 You need to set the PYTHONPATH like this:
 `set PYTHONPATH=%PYTHONPATH%;C:\mssql_to_redshift_data_transfer_tool\`<br />
