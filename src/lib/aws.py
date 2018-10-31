@@ -70,6 +70,7 @@ class RedShift:
             RedShift.init()
 
             env_var_json = json.loads(env_vars())
+            
             aws_access_key_id = env_var_json["aws_access_key_id"]
             aws_secret_access_key = env_var_json["aws_secret_access_key"]
 
@@ -81,8 +82,6 @@ class RedShift:
                                    + "'aws_access_key_id=" + aws_access_key_id + "; aws_secret_access_key=" \
                                    + aws_secret_access_key + "' csv;"
             cur.execute(copy_redshift_string)
-            #cur.execute("copy kpi_kpireport from 's3://clab-migration/kpi.csv' credentials 'aws_access_key_id=ID;aws_secret_access_key=KEY/KEY/pL/KEY' csv;")
-            #print(copy_redshift_string)
             cur.execute("commit;")
 
         except ConnectionError:
