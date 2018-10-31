@@ -196,10 +196,10 @@ BEGIN TRY
 							ELSE '.csv'',' 
 						END 	
 
-        If @DryRun = 0
+        	IF @DryRun = 0
 		BEGIN			
-		     EXEC mngmt.ExecutionLogs_Insert 'MSSQL-BCP', @DatabaseName, @SchemaName, @TableName, @TargetDirectory, @FileName, @Status, @Message
-        END
+			EXEC mngmt.ExecutionLogs_Insert 'MSSQL-BCP', @DatabaseName, @SchemaName, @TableName, @TargetDirectory, @FileName, @Status, @Message
+        	END
 					
 		DELETE FROM #tmp WHERE RN = @ID;
 	END
