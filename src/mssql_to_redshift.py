@@ -146,6 +146,8 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     # 6: run Redshift COPY commands
     ###########################################################################
 
+    logging.info(f'Copy of the .csv files to the AWS Redshift cluster started')
+
     for filename in files:
         fullfilename = filename.strip("'")
         filename = fullfilename.rsplit('\\', 1)[1]
