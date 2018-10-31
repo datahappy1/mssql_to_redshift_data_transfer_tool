@@ -150,7 +150,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         fullfilename = filename.strip("'")
         filename = fullfilename.rsplit('\\', 1)[1]
 
-        # TODO AWS Redshift tablename equals filename without the .csv extension and the timestamp
+        # TODO AWS Redshift tablename set as the filename without the .csv extension and the timestamp
         tablename = filename[0:(len(filename)-24)]
 
         if bool(dryrun):
