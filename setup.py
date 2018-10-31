@@ -2,11 +2,12 @@ from setuptools import setup
 
 setup(
     name='mssql_to_redshift',
-    version='',
+    version='1.0',
     packages=[''],
     url='',
-    license='',
-    author='vyhle',
+    license='MIT',
+    author='datahappy1',
     author_email='',
-    description=''
+    description='',
+    install_requires=['boto3', 'psycopg2', 'pymssql']
 )
