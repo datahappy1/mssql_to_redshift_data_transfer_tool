@@ -27,7 +27,7 @@ It consumes arguments defining:
 ### To install:
 `git clone https://www.github.com/datahappy1/mssql_to_redshift_data_transfer_tool mssql_to_redshift_data_transfer_tool` <br />
 <br />
-Follow the instructions in notes.txt files from the https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/install/ subfolders  
+Follow the instructions in notes.txt files from the https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/tree/master/install subfolders  
 <br />
 
 #### On Windows:<br />
