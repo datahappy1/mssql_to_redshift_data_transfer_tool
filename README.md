@@ -57,6 +57,8 @@ A permanent solution is to:<br />
 <br />
 <br />
 
+### First run on Linux:<br />
+TODO
 
 #### Pytest testing:<br />
 Pytest (version 3.9.1) integration and connectivity tests are also a part of this tool.
