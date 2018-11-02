@@ -14,6 +14,7 @@ for i in config_values_in:
     encoded = str(encoded).strip("b'")
     env_var_out[i] = encoded
 
+print(env_var_out)
 env_var_out = str(env_var_out).replace('\'', '"')
 
 # set the environment variable
