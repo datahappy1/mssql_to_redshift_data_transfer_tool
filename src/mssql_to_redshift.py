@@ -87,11 +87,11 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         sys.exit(1)
 
     elif "No .csv files generated" in ret:
-        logging.error(f'No .csv files generated')
+        logging.error(f'{dryrunloggingstringprefix}No .csv files generated')
         sys.exit(1)
 
     else:
-        logging.info(f'Generating .csv files finished')
+        logging.info(f'{dryrunloggingstringprefix}Generating .csv files finished')
 
     ####################################################################################################################
     # 4: check the .csv filesize
@@ -128,7 +128,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         filename = fullfilename.rsplit('\\', 1)[1]
 
         if bool(dryrun):
-            logging.info(f'{dryrunLoggingStringPrefix}S3 copy {filename}')
+            logging.info(f'{dryrunloggingstringprefix}S3 copy {filename}')
         else:
             aws.S3.upload(fullfilename, filename)
             mssql.StoredProc.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
@@ -178,6 +178,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     aws.RedShift.init().close()
     logging.info(f'AWS Redshift connection closed')
 
+    logging.info(f'Program ran successfully!')
 
 if __name__ == "__main__":
     prepare_args()

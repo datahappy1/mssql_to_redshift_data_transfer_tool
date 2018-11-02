@@ -42,7 +42,6 @@ class StoredProc:
 
             ret = cursor.fetchone()[0]
             return ret
-
         except ConnectionError:
             logging.error(f"Stored Procedure Extract_Filter_BCP failed, ConnectionError")
             sys.exit(1)
@@ -61,6 +60,5 @@ class StoredProc:
                            + " @status='" + status + "',"
                            + " @message='" + message + "'"
                            )
-
         except ConnectionError:
             logging.warning(f"Row not logged, ConnectionError")

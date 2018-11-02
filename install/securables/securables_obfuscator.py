@@ -8,9 +8,9 @@ env_var_out = {}
 
 for i in config_values_in:
     config_values_in = input(i + ":")
-    config_values_in = bytes(config_values_in, encoding='utf8')
+    config_values_in = bytes(config_values_in, encoding='utf-8')
 
-    encoded = base64.b64encode(config_values_in)
+    encoded = base64.b16encode(config_values_in)
     encoded = str(encoded).strip("b'")
     env_var_out[i] = encoded
 
