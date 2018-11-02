@@ -1,21 +1,18 @@
 import pymssql
 import logging
-import json
 import sys
 from src.settings import mssql_db
-from src.lib.utils import env_vars
+from src.lib.utils import decode_env_vars
 
 
 class General:
     @staticmethod
     def init():
         try:
-            env_var_json = json.loads(env_vars())
-
-            mssql_host = env_var_json["mssql_host"]
-            mssql_port = env_var_json["mssql_port"]
-            mssql_user = env_var_json["mssql_user"]
-            mssql_pass = env_var_json["mssql_pass"]
+            mssql_host = decode_env_vars("mssql_host")
+            mssql_port = decode_env_vars("mssql_port")
+            mssql_user = decode_env_vars("mssql_user")
+            mssql_pass = decode_env_vars("mssql_pass")
 
             conn = pymssql.connect(server=mssql_host,
                                    port=mssql_port,
@@ -23,6 +20,8 @@ class General:
                                    password=mssql_pass,
                                    database=mssql_db,
                                    autocommit=True)
+
+            logging.info(f'SQL Server connection initiated')
             return conn
         except ConnectionError:
             logging.error('SQL Server connection failed, ConnectionError')

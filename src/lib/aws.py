@@ -1,11 +1,10 @@
 from boto3.s3.transfer import S3Transfer
 from boto3.exceptions import Boto3Error, S3UploadFailedError
 from src.settings import s3_bucketname, s3_targetdir, redshift_db
-from src.lib.utils import env_vars
+from src.lib.utils import decode_env_vars
 import boto3
 import psycopg2
 import logging
-import json
 import sys
 
 
@@ -13,13 +12,13 @@ class S3:
     @staticmethod
     def init():
         try:
-            env_var_json = json.loads(env_vars())
-
-            aws_access_key_id = env_var_json["aws_access_key_id"]
-            aws_secret_access_key = env_var_json["aws_secret_access_key"]
+            aws_access_key_id = decode_env_vars("aws_access_key_id")
+            aws_secret_access_key = decode_env_vars("aws_secret_access_key")
 
             client = boto3.client('s3', aws_access_key_id=aws_access_key_id,
                                   aws_secret_access_key=aws_secret_access_key)
+
+            logging.info(f'AWS S3 connection initiated')
             return client
 
         except Boto3Error:
@@ -48,16 +47,18 @@ class RedShift:
     @staticmethod
     def init():
         try:
-            env_var_json = json.loads(env_vars())
 
-            redshift_host = env_var_json["redshift_host"]
-            redshift_port = env_var_json["redshift_port"]
-            redshift_user = env_var_json["redshift_user"]
-            redshift_pass = env_var_json["redshift_pass"]
+            redshift_host = decode_env_vars("redshift_host")
+            redshift_port = decode_env_vars("redshift_port")
+            redshift_user = decode_env_vars("redshift_user")
+            redshift_pass = decode_env_vars("redshift_pass")
+
             redshift_database = redshift_db
 
             conn = psycopg2.connect(dbname=redshift_database, host=redshift_host, port=redshift_port,
                                     user=redshift_user, password=redshift_pass)
+
+            logging.info(f'AWS Redshift connection initiated')
             return conn
 
         except ConnectionError:
@@ -69,10 +70,8 @@ class RedShift:
         try:
             RedShift.init()
 
-            env_var_json = json.loads(env_vars())
-            
-            aws_access_key_id = env_var_json["aws_access_key_id"]
-            aws_secret_access_key = env_var_json["aws_secret_access_key"]
+            aws_access_key_id = decode_env_vars("aws_access_key_id")
+            aws_secret_access_key = decode_env_vars("aws_secret_access_key")
 
             cur = RedShift.init().cursor()
             cur.execute("begin;")

@@ -1,4 +1,9 @@
-1) Windows -> Edit the system environment variables -> environment variables -> user variables for your user -> add new ->
-variable name: mssql_to_redshift_data_transfer_tool
-variable value: {"mssql_host" : "", "mssql_port" : "1433", "mssql_user" : "", "mssql_pass" : "", "aws_access_key_id" : "", "aws_secret_access_key" : "", "redshift_host" : "", "redshift_port" : "5555", "redshift_user" : "", "redshift_pass" : ""}
-Restart your IDE ( or your machine )
+1) Windows -> Edit the system environment variables -> environment variables -> user variables for your user -> add new
+
+2) Set the variable name: mssql_to_redshift_data_transfer_tool
+
+3) Run the securables_obfuscator.py tool , input your configuration values and use the variable value in the environment variable value
+
+4) Restart your IDE ( or your machine )
+
+*Note this should secure you from shoulder-surfers, but it's not a real encryption though

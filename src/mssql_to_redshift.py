@@ -57,7 +57,6 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     ####################################################################################################################
 
     mssql.General.init()
-    logging.info(f'SQL Server connection initiated')
 
     ####################################################################################################################
     # 2: create a working folder for the .csv files
@@ -116,7 +115,6 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     ####################################################################################################################
 
     aws.S3.init()
-    logging.info(f'AWS S3 connection initiated')
 
     ####################################################################################################################
     # 6: upload csv files to S3
@@ -145,7 +143,6 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     ####################################################################################################################
 
     aws.RedShift.init()
-    logging.info(f'AWS Redshift connection initiated')
 
     ####################################################################################################################
     # 8: run Redshift COPY commands
