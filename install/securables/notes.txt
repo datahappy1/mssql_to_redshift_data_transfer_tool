@@ -2,7 +2,8 @@
 
 2) Set the variable name: mssql_to_redshift_data_transfer_tool
 
-3) Run the securables_obfuscator.py tool , input your configuration values and use the variable value in the environment variable value
+3) Run the securables_obfuscator.py tool ,
+input your configuration values and use the retrieved variable value in your Windows environment variable value field
 
 4) Restart your IDE ( or your machine )
 
