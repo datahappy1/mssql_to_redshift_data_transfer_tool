@@ -155,6 +155,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         filename = fullfilename.rsplit('\\', 1)[1]
 
         # TODO AWS Redshift tablename set as the filename without the .csv extension and the timestamp
+        # TODO add settings.py value for AWS vacuum tablename command possibility
         tablename = filename[0:(len(filename)-24)]
 
         if bool(dryrun):
