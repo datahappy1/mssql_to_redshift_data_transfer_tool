@@ -3,4 +3,6 @@ csv_max_filesize = 1024
 s3_bucketname = 'hb-migrations-redshift'
 s3_targetdir = 'files_to_copy_to_redshift'
 redshift_db = 'redshift_db'
+# redshift_vacuum_tables = True
+# TODO https://docs.aws.amazon.com/redshift/latest/dg/r_VACUUM_command.html
 
