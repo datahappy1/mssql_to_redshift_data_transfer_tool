@@ -53,13 +53,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         dryrunloggingstringprefix = ''
 
     ####################################################################################################################
-    # 1: init MSSQL
-    ####################################################################################################################
-
-    mssql.General.init()
-
-    ####################################################################################################################
-    # 2: create a working folder for the .csv files
+    # 1: create a working folder for the .csv files
     ####################################################################################################################
 
     try:
@@ -75,10 +69,10 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         sys.exit(1)
 
     ####################################################################################################################
-    # 3: execute the mngmt.Extract_Filter_BCP MSSQL Stored Procedure with pymssql
+    # 2: execute the mngmt.Extract_Filter_BCP MSSQL Stored Procedure with pymssql
     ####################################################################################################################
 
-    logging.info(f'{dryrunloggingstringprefix}Generating .csv files started')
+    logging.info(f'{dryrunloggingstringprefix}Generating .csv files using bcp in a stored procedure starting')
     ret = mssql.StoredProc.run_extract_filter_bcp(databasename, schemaname, targetdirectory, dryrun)
 
     if "MSSQL error, details:" in ret:
@@ -91,10 +85,10 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         sys.exit(1)
 
     else:
-        logging.info(f'{dryrunloggingstringprefix}Generating .csv files finished')
+        logging.info(f'{dryrunloggingstringprefix}Generating .csv files using bcp in a stored procedure finished')
 
     ####################################################################################################################
-    # 4: check the .csv filesize
+    # 3: check the .csv filesize
     ####################################################################################################################
 
     files = utils.str_split(ret)
@@ -109,19 +103,14 @@ def main(databasename, schemaname, targetdirectory, dryrun):
             sys.exit(1)
         else:
             pass
+    logging.info(f'All files passed the max filesize check, value declared in settings.py')
 
     ####################################################################################################################
-    # 5: init AWS S3
-    ####################################################################################################################
-
-    aws.S3.init()
-
-    ####################################################################################################################
-    # 6: upload csv files to S3
+    # 4: upload csv files to S3
     ####################################################################################################################
 
     logging.info(f'{dryrunloggingstringprefix}Upload of the .csv files to the S3 bucket location '
-                 f'{settings.s3_bucketname}/{settings.s3_targetdir} started')
+                 f'{settings.s3_bucketname}/{settings.s3_targetdir} starting')
 
     for filename in files:
         fullfilename = filename.strip("'")
@@ -139,16 +128,10 @@ def main(databasename, schemaname, targetdirectory, dryrun):
                  f'{settings.s3_bucketname}/{settings.s3_targetdir} finished')
 
     ####################################################################################################################
-    # 7: init AWS Redshift
+    # 5: run Redshift COPY commands
     ####################################################################################################################
 
-    aws.RedShift.init()
-
-    ####################################################################################################################
-    # 8: run Redshift COPY commands
-    ####################################################################################################################
-
-    logging.info(f'{dryrunloggingstringprefix}Copy of the .csv files to the AWS Redshift cluster started')
+    logging.info(f'{dryrunloggingstringprefix}Copy of the .csv files to the AWS Redshift cluster starting')
 
     for filename in files:
         fullfilename = filename.strip("'")
@@ -159,7 +142,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         tablename = filename[0:(len(filename)-24)]
 
         if bool(dryrun):
-            logging.info(f'{dryrunloggingstringprefix} copy {tablename} {filename} from s3://{settings.s3_bucketname}')
+            logging.info(f'{dryrunloggingstringprefix}copy {tablename} {filename} from s3://{settings.s3_bucketname}')
         else:
             aws.RedShift.copy(tablename, filename)
             mssql.StoredProc.write_log_row('RS UPLOAD', databasename, schemaname, tablename, settings.s3_bucketname + '/'
@@ -169,7 +152,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     logging.info(f'{dryrunloggingstringprefix}Copy of the .csv files to the AWS Redshift cluster finished')
 
     ####################################################################################################################
-    # 9: close connections
+    # 6: close connections
     ####################################################################################################################
 
     mssql.General.init().close()
