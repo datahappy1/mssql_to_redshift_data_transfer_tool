@@ -4,7 +4,7 @@ import logging
 
 
 # assuming we can initiate a connection to S3 and both source and target DBs
-def connect():
+def test_connect():
     try:
         mssql.init()
         assertion = 1
@@ -27,3 +27,5 @@ def connect():
         pass
 
     assert assertion == 3
+
+test_connect()
