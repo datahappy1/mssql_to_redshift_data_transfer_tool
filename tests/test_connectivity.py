@@ -6,21 +6,21 @@ import logging
 # assuming we can initiate a connection to S3 and both source and target DBs
 def connect():
     try:
-        mssql.General.init()
+        mssql.init()
         assertion = 1
     except ConnectionError:
         logging.info(f'Connection to MSSQL failed')
         pass
 
     try:
-        aws.S3.init()
+        aws.init_s3()
         assertion = assertion + 1
     except ConnectionError:
         logging.info(f'Connection to AWS S3 failed')
         pass
 
     try:
-        aws.RedShift.init()
+        aws.init_RedShift()
         assertion = assertion + 1
     except ConnectionError:
         logging.info(f'Connection to AWS Redshift failed')

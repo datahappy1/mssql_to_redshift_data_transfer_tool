@@ -8,7 +8,7 @@ from src.lib.utils import decode_env_vars
 logging.getLogger().setLevel(logging.INFO)
 
 
-class General:
+def init():
     global conn
 
     try:
@@ -29,44 +29,42 @@ class General:
         logging.error(f'SQL Server connection failed')
         sys.exit(1)
 
-    @staticmethod
-    def close():
-        conn.close()
-        logging.info(f'SQL Server connection closed')
-        return 0
+
+def close():
+    conn.close()
+    logging.info(f'SQL Server connection closed')
+    return 0
 
 
-class StoredProc:
-    @staticmethod
-    def run_extract_filter_bcp(databasename, schemaname, targetdirectory, dryrun):
-        try:
-            cursor = conn.cursor()
-            cursor.execute("EXEC [mngmt].[Extract_Filter_BCP] '"
-                           + databasename + "','"
-                           + schemaname + "','"
-                           + targetdirectory + "','"
-                           + str(dryrun) + "'"
-                           )
+def run_extract_filter_bcp(databasename, schemaname, targetdirectory, dryrun):
+    try:
+        cursor = conn.cursor()
+        cursor.execute("EXEC [mngmt].[Extract_Filter_BCP] '"
+                       + databasename + "','"
+                       + schemaname + "','"
+                       + targetdirectory + "','"
+                       + str(dryrun) + "'"
+                       )
 
-            ret = cursor.fetchone()[0]
-            return ret
-        except ConnectionError:
-            logging.error(f"Stored Procedure Extract_Filter_BCP failed, ConnectionError")
-            sys.exit(1)
+        ret = cursor.fetchone()[0]
+        return ret
+    except ConnectionError:
+        logging.error(f"Stored Procedure Extract_Filter_BCP failed, ConnectionError")
+        sys.exit(1)
 
-    @staticmethod
-    def write_log_row(executionstep, databasename, schemaname, tablename, targetdirectory, filename, status, message):
-        try:
-            cursor = conn.cursor()
-            cursor.execute("EXEC [mngmt].[ExecutionLogs_Insert]"
-                           + " @executionstep='" + executionstep + "',"
-                           + " @databasename='" + databasename + "',"
-                           + " @schemaname='" + schemaname + "',"
-                           + " @tablename='" + tablename + "',"
-                           + " @targetdirectory='" + targetdirectory + "',"
-                           + " @filename='" + filename + "',"
-                           + " @status='" + status + "',"
-                           + " @message='" + message + "'"
-                           )
-        except ConnectionError:
-            logging.warning(f"Row not logged, ConnectionError")
+
+def write_log_row(executionstep, databasename, schemaname, tablename, targetdirectory, filename, status, message):
+    try:
+        cursor = conn.cursor()
+        cursor.execute("EXEC [mngmt].[ExecutionLogs_Insert]"
+                       + " @executionstep='" + executionstep + "',"
+                       + " @databasename='" + databasename + "',"
+                       + " @schemaname='" + schemaname + "',"
+                       + " @tablename='" + tablename + "',"
+                       + " @targetdirectory='" + targetdirectory + "',"
+                       + " @filename='" + filename + "',"
+                       + " @status='" + status + "',"
+                       + " @message='" + message + "'"
+                       )
+    except ConnectionError:
+        logging.warning(f"Row not logged, ConnectionError")

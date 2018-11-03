@@ -71,8 +71,11 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     # 2: execute the mngmt.Extract_Filter_BCP MSSQL Stored Procedure with pymssql
     ####################################################################################################################
 
+    mssql.init()
+
     logging.info(f'{dryrunloggingstringprefix}Generating .csv files using bcp in a stored procedure starting')
-    ret = mssql.StoredProc.run_extract_filter_bcp(databasename, schemaname, targetdirectory, dryrun)
+
+    ret = mssql.run_extract_filter_bcp(databasename, schemaname, targetdirectory, dryrun)
 
     if "MSSQL error, details:" in ret:
         logging.error(f'SQL code error in the stored procedure')
@@ -108,6 +111,8 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     # 4: upload csv files to S3
     ####################################################################################################################
 
+    aws.init_s3()
+
     logging.info(f'{dryrunloggingstringprefix}Upload of the .csv files to the S3 bucket location '
                  f'{settings.s3_bucketname}/{settings.s3_targetdir} starting')
 
@@ -118,10 +123,10 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         if bool(dryrun):
             logging.info(f'{dryrunloggingstringprefix}S3 copy {filename}')
         else:
-            aws.S3.upload(fullfilename, filename)
-            mssql.StoredProc.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
-                                           + settings.s3_targetdir, filename, 'S', 'file ' + filename
-                                           + ' copied to S3 bucket')
+            aws.upload_to_s3(fullfilename, filename)
+            mssql.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
+                                + settings.s3_targetdir, filename, 'S', 'file ' + filename
+                                + ' copied to S3 bucket')
 
     logging.info(f'{dryrunloggingstringprefix}Upload of the .csv files to the S3 bucket location '
                  f'{settings.s3_bucketname}/{settings.s3_targetdir} finished')
@@ -129,6 +134,8 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     ####################################################################################################################
     # 5: run Redshift COPY commands
     ####################################################################################################################
+
+    aws.init_RedShift()
 
     logging.info(f'{dryrunloggingstringprefix}Copy of the .csv files to the AWS Redshift cluster starting')
 
@@ -143,18 +150,18 @@ def main(databasename, schemaname, targetdirectory, dryrun):
         if bool(dryrun):
             logging.info(f'{dryrunloggingstringprefix}copy {tablename} {filename} from s3://{settings.s3_bucketname}')
         else:
-            aws.RedShift.copy(tablename, filename)
-            mssql.StoredProc.write_log_row('RS UPLOAD', databasename, schemaname, tablename, settings.s3_bucketname + '/'
-                                           + settings.s3_targetdir, filename, 'S', 'file ' + filename
-                                           + ' copied to a Redshift table ' + tablename + ' from the S3 bucket')
+            aws.copy_to_RedShift(tablename, filename)
+            mssql.write_log_row('RS UPLOAD', databasename, schemaname, tablename, settings.s3_bucketname + '/'
+                                + settings.s3_targetdir, filename, 'S', 'file ' + filename
+                                + ' copied to a Redshift table ' + tablename + ' from the S3 bucket')
 
     logging.info(f'{dryrunloggingstringprefix}Copy of the .csv files to the AWS Redshift cluster finished')
 
     ####################################################################################################################
     # 6: close DB connections
     ####################################################################################################################
-    mssql.General.close()
-    aws.RedShift.close()
+    mssql.close()
+    aws.close_RedShift()
 
     logging.info(f'Program ran successfully!')
 
