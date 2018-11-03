@@ -180,5 +180,6 @@ def main(databasename, schemaname, targetdirectory, dryrun):
 
     logging.info(f'Program ran successfully!')
 
+
 if __name__ == "__main__":
     prepare_args()

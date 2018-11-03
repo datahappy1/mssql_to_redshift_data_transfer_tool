@@ -3,6 +3,7 @@ import sys
 import logging
 import json
 import base64
+import urllib.parse
 
 
 def str_split(ret):
@@ -31,7 +32,8 @@ def decode_env_vars(key):
 
         value = env_var_json[key]
         value = base64.b16decode(value)
-        value = str(value).strip("b'")
+        value = str(value).lstrip("b'").rstrip("'")
+        value = urllib.parse.unquote_plus(value)
         return value
     except Exception as ex:
         logging.error(f"Could not decode environment variable configuration value {key} ")
