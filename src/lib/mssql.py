@@ -6,33 +6,40 @@ from src.lib.utils import decode_env_vars
 
 
 class General:
+    global conn
+    # set logging levels for mssql module console output
+    logging.getLogger().setLevel(logging.INFO)
+
+    try:
+        mssql_host = decode_env_vars("mssql_host")
+        mssql_port = decode_env_vars("mssql_port")
+        mssql_user = decode_env_vars("mssql_user")
+        mssql_pass = decode_env_vars("mssql_pass")
+
+        conn = pymssql.connect(server=mssql_host,
+                               port=mssql_port,
+                               user=mssql_user,
+                               password=mssql_pass,
+                               database=mssql_db,
+                               autocommit=True)
+
+        logging.info(f'SQL Server connection initiated')
+    except ConnectionError:
+        logging.error(f'SQL Server connection failed')
+        sys.exit(1)
+
     @staticmethod
-    def init():
-        try:
-            mssql_host = decode_env_vars("mssql_host")
-            mssql_port = decode_env_vars("mssql_port")
-            mssql_user = decode_env_vars("mssql_user")
-            mssql_pass = decode_env_vars("mssql_pass")
-
-            conn = pymssql.connect(server=mssql_host,
-                                   port=mssql_port,
-                                   user=mssql_user,
-                                   password=mssql_pass,
-                                   database=mssql_db,
-                                   autocommit=True)
-
-            logging.info(f'SQL Server connection initiated')
-            return conn
-        except ConnectionError:
-            logging.error('SQL Server connection failed, ConnectionError')
-            sys.exit(1)
+    def close():
+        conn.close()
+        logging.info(f'SQL Server connection closed')
+        return 0
 
 
 class StoredProc:
     @staticmethod
     def run_extract_filter_bcp(databasename, schemaname, targetdirectory, dryrun):
         try:
-            cursor = General.init().cursor()
+            cursor = conn.cursor()
             cursor.execute("EXEC [mngmt].[Extract_Filter_BCP] '"
                            + databasename + "','"
                            + schemaname + "','"
@@ -49,7 +56,7 @@ class StoredProc:
     @staticmethod
     def write_log_row(executionstep, databasename, schemaname, tablename, targetdirectory, filename, status, message):
         try:
-            cursor = General.init().cursor()
+            cursor = conn.cursor()
             cursor.execute("EXEC [mngmt].[ExecutionLogs_Insert]"
                            + " @executionstep='" + executionstep + "',"
                            + " @databasename='" + databasename + "',"

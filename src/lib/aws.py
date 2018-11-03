@@ -7,6 +7,9 @@ import psycopg2
 import logging
 import sys
 
+# set logging levels for aws module console output
+logging.getLogger().setLevel(logging.INFO)
+
 
 class S3:
     @staticmethod
@@ -42,35 +45,38 @@ class S3:
 
 
 class RedShift:
+    global conn
+
+    try:
+        redshift_host = decode_env_vars("redshift_host")
+        redshift_port = decode_env_vars("redshift_port")
+        redshift_user = decode_env_vars("redshift_user")
+        redshift_pass = decode_env_vars("redshift_pass")
+
+        redshift_database = redshift_db
+
+        conn = psycopg2.connect(dbname=redshift_database, host=redshift_host, port=redshift_port,
+                                user=redshift_user, password=redshift_pass)
+
+        logging.info(f'AWS Redshift connection initiated')
+
+    except ConnectionError:
+        logging.error('AWS Redshift connection failed, ConnectionError')
+        sys.exit(1)
+
     @staticmethod
-    def init():
-        try:
-
-            redshift_host = decode_env_vars("redshift_host")
-            redshift_port = decode_env_vars("redshift_port")
-            redshift_user = decode_env_vars("redshift_user")
-            redshift_pass = decode_env_vars("redshift_pass")
-
-            redshift_database = redshift_db
-
-            conn = psycopg2.connect(dbname=redshift_database, host=redshift_host, port=redshift_port,
-                                    user=redshift_user, password=redshift_pass)
-
-            logging.info(f'AWS Redshift connection initiated')
-            return conn
-        except ConnectionError:
-            logging.error('AWS Redshift connection failed, ConnectionError')
-            sys.exit(1)
+    def close():
+        conn.close()
+        logging.info(f'AWS Redshift connection closed')
+        return 0
 
     @staticmethod
     def copy(tablename, filename):
         try:
-            RedShift.init()
-
             aws_access_key_id = decode_env_vars("aws_access_key_id")
             aws_secret_access_key = decode_env_vars("aws_secret_access_key")
 
-            cur = RedShift.init().cursor()
+            cur = conn.cursor()
             cur.execute("begin;")
 
             copy_redshift_string = 'copy ' + tablename + " from 's3://" + s3_bucketname + '/' + s3_targetdir + '/' \

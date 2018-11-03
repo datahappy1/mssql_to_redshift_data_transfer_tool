@@ -2,7 +2,6 @@ import argparse
 import logging
 import os
 import sys
-import pymssql
 from src import settings
 from src.lib import mssql
 from src.lib import aws
@@ -103,7 +102,7 @@ def main(databasename, schemaname, targetdirectory, dryrun):
             sys.exit(1)
         else:
             pass
-    logging.info(f'All files passed the max filesize check, value declared in settings.py')
+    logging.info(f'All files passed the max filesize check, value {settings.csv_max_filesize} declared in settings.py')
 
     ####################################################################################################################
     # 4: upload csv files to S3
@@ -152,14 +151,10 @@ def main(databasename, schemaname, targetdirectory, dryrun):
     logging.info(f'{dryrunloggingstringprefix}Copy of the .csv files to the AWS Redshift cluster finished')
 
     ####################################################################################################################
-    # 6: close connections
+    # 6: close DB connections
     ####################################################################################################################
-
-    mssql.General.init().close()
-    logging.info(f'MSSQL connection closed')
-
-    aws.RedShift.init().close()
-    logging.info(f'AWS Redshift connection closed')
+    mssql.General.close()
+    aws.RedShift.close()
 
     logging.info(f'Program ran successfully!')
 
