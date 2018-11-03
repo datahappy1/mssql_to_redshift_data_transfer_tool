@@ -4,11 +4,12 @@ import sys
 from src.settings import mssql_db
 from src.lib.utils import decode_env_vars
 
+# set logging levels for mssql module console output
+logging.getLogger().setLevel(logging.INFO)
+
 
 class General:
     global conn
-    # set logging levels for mssql module console output
-    logging.getLogger().setLevel(logging.INFO)
 
     try:
         mssql_host = decode_env_vars("mssql_host")

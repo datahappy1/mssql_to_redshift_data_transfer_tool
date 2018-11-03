@@ -12,20 +12,20 @@ logging.getLogger().setLevel(logging.INFO)
 
 
 class S3:
-    @staticmethod
-    def init():
-        try:
-            aws_access_key_id = decode_env_vars("aws_access_key_id")
-            aws_secret_access_key = decode_env_vars("aws_secret_access_key")
+    global conn_s3
 
-            client = boto3.client('s3', aws_access_key_id=aws_access_key_id,
-                                  aws_secret_access_key=aws_secret_access_key)
+    try:
+        aws_access_key_id = decode_env_vars("aws_access_key_id")
+        aws_secret_access_key = decode_env_vars("aws_secret_access_key")
 
-            logging.info(f'AWS S3 connection initiated')
-            return client
-        except Boto3Error:
-            logging.error('AWS S3 connection failed, Boto3Error')
-            sys.exit(1)
+        conn_s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
+                              aws_secret_access_key=aws_secret_access_key)
+
+        logging.info(f'AWS S3 connection initiated')
+
+    except Boto3Error:
+        logging.error('AWS S3 connection failed, Boto3Error')
+        sys.exit(1)
 
     @staticmethod
     def upload(fullfilename, filename):
@@ -33,9 +33,7 @@ class S3:
             bucketname = s3_bucketname
             targetdir = s3_targetdir
 
-            client = S3.init()
-
-            transfer = S3Transfer(client)
+            transfer = S3Transfer(conn_s3)
             transfer.upload_file(fullfilename, bucketname, targetdir + "/" + filename)
             logging.info(f'File {filename} uploaded successfully, target bucket: {bucketname}, '
                          f'target folder: {targetdir}')
@@ -45,7 +43,7 @@ class S3:
 
 
 class RedShift:
-    global conn
+    global conn_redshift
 
     try:
         redshift_host = decode_env_vars("redshift_host")
@@ -55,7 +53,7 @@ class RedShift:
 
         redshift_database = redshift_db
 
-        conn = psycopg2.connect(dbname=redshift_database, host=redshift_host, port=redshift_port,
+        conn_redshift = psycopg2.connect(dbname=redshift_database, host=redshift_host, port=redshift_port,
                                 user=redshift_user, password=redshift_pass)
 
         logging.info(f'AWS Redshift connection initiated')
@@ -66,7 +64,7 @@ class RedShift:
 
     @staticmethod
     def close():
-        conn.close()
+        conn_redshift.close()
         logging.info(f'AWS Redshift connection closed')
         return 0
 
@@ -76,7 +74,7 @@ class RedShift:
             aws_access_key_id = decode_env_vars("aws_access_key_id")
             aws_secret_access_key = decode_env_vars("aws_secret_access_key")
 
-            cur = conn.cursor()
+            cur = conn_redshift.cursor()
             cur.execute("begin;")
 
             copy_redshift_string = 'copy ' + tablename + " from 's3://" + s3_bucketname + '/' + s3_targetdir + '/' \
