@@ -5,9 +5,11 @@ import logging
 
 # assuming we can initiate a connection to S3 and both source and target DBs
 def test_connect():
+    assertion = 0
+
     try:
         mssql.init()
-        assertion = 1
+        assertion = assertion + 1
     except ConnectionError:
         logging.info(f'Connection to MSSQL failed')
         pass
@@ -27,5 +29,3 @@ def test_connect():
         pass
 
     assert assertion == 3
-
-test_connect()
