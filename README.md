@@ -88,7 +88,7 @@ Run this command to execute:<br />
 -Don't forget to setup the project scoped settings like the AWS S3 bucket name and the maximum csv filesize and others under /src/settings.py <br />
 -Make sure you've got your AWS Redshift tables ready <br />
 -Set the Pythonpath env.variable <br />
--Run Pytest to make sure everything's set correctly
+-Run Pytest to make sure everything's working correctly <br />
 -Try running this tool with the Dryrun argument set to true <br />
 -If the AWS Redshift commands are correct, re-run with the Dryrun argument set to false <br />
 
