@@ -35,6 +35,23 @@ CREATE TABLE mngmt.ControlTable (
 )
 GO
 
+--For Integration testing purpose, let's insert a row with test source data
+INSERT INTO mngmt.ControlTable(DatabaseName, SchemaName, TableName, ColumnName, Column_id, IsActive)
+    SELECT 'MSSQL_to_Redshift', 'mngmt', 'Integration_test_table', 'test_column_1', 1, 1
+    UNION ALL
+    SELECT 'MSSQL_to_Redshift', 'mngmt', 'Integration_test_table', 'test_column_2', 2, 1;
+GO
+--Lets also create now this integration testing source table
+CREATE TABLE mngmt.Integration_test_table (
+    test_column_1 VARCHAR(50),
+    test_column_2 VARCHAR(50)
+)
+GO
+--Lets insert a sample row to this table
+INSERT INTO mngmt.Integration_test_table(test_column_1, test_column_2)
+    SELECT 'test_column_1_value', 'test_column_2_value'
+
+
 --For DEMO purposes, let's fill the control table for the transfer with the AdventureWorks DataWarehouse tables 
 --and set all columns as IsActive
 USE AdventureWorksDW2016;
@@ -150,6 +167,9 @@ BEGIN TRY
 							FOR XML PATH ('')), 1, 1, ''
 					) AS ColumnNamesSerialized
 		FROM mngmt.ControlTable o
+		WHERE	DatabaseName = @DatabaseName
+			AND SchemaName = @SchemaName
+			AND IsActive = 1
 		GROUP BY DatabaseName,SchemaName,TableName
 	) i
 	WHERE i.ColumnNamesSerialized IS NOT NULL;
