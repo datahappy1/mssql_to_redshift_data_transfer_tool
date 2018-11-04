@@ -21,10 +21,10 @@ def init_s3():
         conn_s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
                               aws_secret_access_key=aws_secret_access_key)
 
-        logging.info(f'AWS S3 connection initiated')
+        logging.info(f'AWS S3 set boto3.client success')
 
     except Boto3Error:
-        logging.error('AWS S3 connection failed, Boto3Error')
+        logging.error('AWS S3 set boto3.client failed, Boto3Error')
         sys.exit(1)
 
 
