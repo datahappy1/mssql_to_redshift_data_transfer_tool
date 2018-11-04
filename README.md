@@ -85,7 +85,7 @@ Run this command to execute:<br />
 -Install everything needed described under this project's /install/ folder<br />
 -Setup the database tables with their columns that you need to transfer over to AWS Redshift in the MSSQL Configuration table mngmt.ControlTable<br />
 *Note that this tool's internal database MSSQL_to_Redshift has to be installed at the same host where your source MSSQL databases are located   <br />
--Don't forget to setup the project scoped settings like the AWS S3 bucket name and the maximum csv filesize and others under /src/settings.py <br />
+-Don't forget to setup the project-scoped settings like the AWS S3 bucket name, the maximum csv filesize, database names and others under /src/settings.py <br />
 -Make sure you've got your AWS Redshift tables ready <br />
 -Set the Pythonpath env.variable <br />
 -Run Pytest to make sure everything's working correctly <br />
