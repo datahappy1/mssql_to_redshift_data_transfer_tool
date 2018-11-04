@@ -28,15 +28,15 @@ It consumes arguments defining:
 `git clone https://www.github.com/datahappy1/mssql_to_redshift_data_transfer_tool mssql_to_redshift_data_transfer_tool` <br />
 <br />
 #### Securables ( hostnames, usernames, passwords etc. ) :
-Follow the instructions in notes.txt files from:<br />
+Follow the instructions in notes.txt file from:<br />
 https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/tree/master/install/securables
 
 #### MSSQL:
-Run the database build using buildscript.sql and then follow the instructions in notes.txt files from:<br />
+Run the database build using buildscript.sql and then follow the instructions in notes.txt file from:<br />
 https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/tree/master/install/mssql
 
 #### AWS:
-Follow the instructions in notes.txt files from:<br /> 
+Follow the instructions in notes.txt file from:<br /> 
 https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/tree/master/install/aws
 <br />
 
