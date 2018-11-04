@@ -82,15 +82,17 @@ Run this command to execute:<br />
 
 
 # How to setup a new MSSQL to Redshift data migration project
-- 1) Install everything needed described under this project's /install/ folder<br />
-- 2) Setup the database tables with their columns that you need to transfer over to AWS Redshift in the MSSQL Configuration table mngmt.ControlTable<br />
+-Install everything needed described under this project's /install/ folder<br />
+-Setup the database tables with their columns that you need to transfer over to AWS Redshift in the MSSQL Configuration table mngmt.ControlTable<br />
 *Note that this tool's internal database MSSQL_to_Redshift has to be installed at the same host where your source MSSQL databases are located   <br />
-- 3) Don't forget to setup the project scoped settings like the AWS S3 bucket name and the maximum csv filesize and others in /src/settings.py <br />
-- 4) Make sure you've got your AWS Redshift tables ready <br />
-- 5) Set the Pythonpath env.variable <br />
-- 6) Try running this tool with the Dryrun argument set to true <br />
-- 7) If the AWS Redshift commands are correct, re-run with the Dryrun argument set to false <br />
+-Don't forget to setup the project scoped settings like the AWS S3 bucket name and the maximum csv filesize and others under /src/settings.py <br />
+-Make sure you've got your AWS Redshift tables ready <br />
+-Set the Pythonpath env.variable <br />
+-Run Pytest to make sure everything's set correctly
+-Try running this tool with the Dryrun argument set to true <br />
+-If the AWS Redshift commands are correct, re-run with the Dryrun argument set to false <br />
 
 
 # Important Notes
 - Feel free to contribute to this project
+- In the future, I'd like to make this tool run also on watermarks, so you transfer to Redshift only the data increments
