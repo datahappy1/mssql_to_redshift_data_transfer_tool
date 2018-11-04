@@ -35,7 +35,7 @@ CREATE TABLE mngmt.ControlTable (
 )
 GO
 
---For Integration testing purpose, let's insert a row with test source data
+--For Integration testing purpose, let's insert 2 rows with test source data
 INSERT INTO mngmt.ControlTable(DatabaseName, SchemaName, TableName, ColumnName, Column_id, IsActive)
     SELECT 'MSSQL_to_Redshift', 'mngmt', 'Integration_test_table', 'test_column_1', 1, 1
     UNION ALL
@@ -169,7 +169,6 @@ BEGIN TRY
 		FROM mngmt.ControlTable o
 		WHERE	DatabaseName = @DatabaseName
 			AND SchemaName = @SchemaName
-			AND IsActive = 1
 		GROUP BY DatabaseName,SchemaName,TableName
 	) i
 	WHERE i.ColumnNamesSerialized IS NOT NULL;
