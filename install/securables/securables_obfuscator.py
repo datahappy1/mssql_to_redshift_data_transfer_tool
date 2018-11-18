@@ -19,6 +19,6 @@ for i in config_values_in:
 env_var_out = str(env_var_out).replace('\'', '"')
 
 # now set the environment variable for your user
-print(f"Environment variable name: mssql_to_redshift_data_transfer_tool")
-print(f"Environment variable value: {env_var_out}")
+print("Environment variable name: mssql_to_redshift_data_transfer_tool")
+print("Environment variable value: %s", env_var_out)
 

@@ -1,3 +1,5 @@
+""" MSSQL to Redshift data transfer tool """
+
 import argparse
 import logging
 import os
@@ -9,10 +11,9 @@ from src.lib import utils
 
 
 def prepare_args():
-
-    ####################################################################################################################
-    # 0: parsing and storing arguments
-    ####################################################################################################################
+    ###########################################################################################
+    """ 0: The arguments parser and main launcher """
+    ###########################################################################################
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-dn', '--databasename', type=str, required=True)
@@ -21,150 +22,196 @@ def prepare_args():
     parser.add_argument('-dr', '--dryrun', type=str, required=True)
     parsed = parser.parse_args()
 
-    databasename = parsed.databasename
-    schemaname = parsed.schemaname
+    database_name = parsed.databasename
+    schema_name = parsed.schemaname
 
-    targetdirectory = parsed.targetdirectory
-    targetdirectory = targetdirectory.replace('\f', '\\f')
+    target_directory = parsed.targetdirectory
+    target_directory = target_directory.replace('\f', '\\f')
 
-    dryrun = parsed.dryrun
-    # argparse bool datatype known bug workaround
-    if dryrun.lower() in ('yes', 'true', 't', 'y', '1'):
-        dryrun = True
-    elif dryrun.lower() in ('no', 'false', 'f', 'n', '0'):
-        dryrun = False
+    dry_run = parsed.dryrun
+    # arg parse bool data type known bug workaround
+    if dry_run.lower() in ('no', 'false', 'f', 'n', '0'):
+        dry_run = False
+        dry_run_str_prefix = ''
     else:
-        logging.error(f'Argument dryrun needs to be convertible to boolean')
-        sys.exit(1)
+        dry_run = True
+        dry_run_str_prefix = 'Dry run '
 
-    main(databasename, schemaname, targetdirectory, dryrun)
+    obj = Runner(database_name, schema_name, target_directory, dry_run, dry_run_str_prefix,
+                 files='', ret='')
+    Runner.main(obj)
 
 
-def main(databasename, schemaname, targetdirectory, dryrun):
-    # set logging levels for main function console output
-    logging.getLogger().setLevel(logging.INFO)
-    logging.getLogger("botocore").setLevel(logging.WARNING)
+class Runner(object):
+    """
+    Class Runner handling the functions for the program flow
+    """
+    def __init__(self, database_name, schema_name, target_directory, dry_run,
+                 dry_run_str_prefix, files, ret):
+        self.database_name = database_name
+        self.schema_name = schema_name
+        self.target_directory = target_directory
+        self.dry_run = dry_run
+        self.dry_run_str_prefix = dry_run_str_prefix
+        self.files = files
+        self.ret = ret
 
-    # variables preparation
-    if bool(dryrun):
-        dryrunloggingstringprefix = 'Dryrun '
-    else:
-        dryrunloggingstringprefix = ''
+    def prepare_dir(self):
+        ###########################################################################################
+        """ 1: preparations and creating a working folder for the .csv files """
+        ###########################################################################################
+        target_directory = self.target_directory
+        try:
+            if not os.path.exists(target_directory):
+                os.makedirs(target_directory)
+                logging.info('%s folder created', target_directory)
+            else:
+                logging.info('%s folder already exists', target_directory)
+        except OSError:
+            logging.error('Could not create the %s folder, OSError', target_directory)
+            sys.exit(1)
 
-    ####################################################################################################################
-    # 1: create a working folder for the .csv files
-    ####################################################################################################################
+    # def ms_sql(self, dry_run_str_prefix, database_name, schema_name, target_directory, dry_run):
+    def ms_sql(self):
+        ###########################################################################################
+        """ 2: execute the [mngmt].[Extract_Filter_BCP] MS SQL Stored Procedure with pymssql """
+        ###########################################################################################
+        dry_run_str_prefix = self.dry_run_str_prefix
 
-    try:
-        if not os.path.exists(targetdirectory):
-            os.makedirs(targetdirectory)
-            logging.info(f'{targetdirectory} folder created')
+        # mssql.init()
 
-        else:
-            logging.info(f'{targetdirectory} folder already exists')
+        logging.info('%s Generating .csv files using bcp in a stored procedure starting',
+                     dry_run_str_prefix)
 
-    except OSError:
-        logging.error(f'Could not create the {targetdirectory} folder, OSError')
-        sys.exit(1)
+        #ret = mssql.run_extract_filter_bcp(database_name, schema_name, target_directory, dry_run)
+        ret = '(abc.csv)'
+        self.ret = ret
 
-    ####################################################################################################################
-    # 2: execute the mngmt.Extract_Filter_BCP MSSQL Stored Procedure with pymssql
-    ####################################################################################################################
-
-    mssql.init()
-
-    logging.info(f'{dryrunloggingstringprefix}Generating .csv files using bcp in a stored procedure starting')
-
-    ret = mssql.run_extract_filter_bcp(databasename, schemaname, targetdirectory, dryrun)
-
-    if "MSSQL error, details:" in ret:
-        logging.error(f'SQL code error in the stored procedure')
-        logging.error(f'{ret}')
-        sys.exit(1)
-
-    elif "No .csv files generated" in ret:
-        logging.error(f'{dryrunloggingstringprefix}No .csv files generated')
-        sys.exit(1)
-
-    else:
-        logging.info(f'{dryrunloggingstringprefix}Generating .csv files using bcp in a stored procedure finished')
-
-    ####################################################################################################################
-    # 3: check the .csv filesize
-    ####################################################################################################################
-
-    files = utils.str_split(ret)
-
-    for filename in files:
-        filename = filename.strip("'")
-        fs = os.path.getsize(filename)
-        # check that the filesize in MB is not greater than settings.csv_max_filesize
-        if fs / 1048576 > settings.csv_max_filesize:
-            logging.error(f'The file {filename} has filesize {str(fs)} MB and that is larger than csv_max_filesize'
-                          f'set in settings.py')
+        if "MS SQL error, details:" in ret:
+            logging.error('SQL code error in the stored procedure')
+            logging.error('%s', ret)
+            sys.exit(1)
+        elif "No .csv files generated" in ret:
+            logging.error('%s No .csv files generated', dry_run_str_prefix)
             sys.exit(1)
         else:
-            pass
-    logging.info(f'All files passed the max filesize check, value {settings.csv_max_filesize} declared in settings.py')
+            logging.info('%s Generating .csv files using bcp in a stored procedure finished',
+                         dry_run_str_prefix)
 
-    ####################################################################################################################
-    # 4: upload csv files to S3
-    ####################################################################################################################
+    def file_size(self):
+        ###########################################################################################
+        """ 3: check the .csv file size """
+        ###########################################################################################
 
-    aws.init_s3()
+        files = utils.str_split(self.ret)
+        self.files = files
 
-    logging.info(f'{dryrunloggingstringprefix}Upload of the .csv files to the S3 bucket location '
-                 f'{settings.s3_bucketname}/{settings.s3_targetdir} starting')
+        for file_name in files:
+            file_name = file_name.strip("'")
+            file_size = os.path.getsize(file_name)
+            # check that the file size in MB is not greater than settings.CSV_MAX_FILE_SIZE
+            if file_size / 1048576 > settings.CSV_MAX_FILE_SIZE:
+                logging.error('The file %s has file size %s MB and that is larger than '
+                              'CSV_MAX_FILE_SIZE set in settings.py', file_name, str(file_size))
+                sys.exit(1)
+            else:
+                pass
 
-    for filename in files:
-        fullfilename = filename.strip("'")
-        filename = fullfilename.rsplit('\\', 1)[1]
+        logging.info('All files passed the max file size check, value %s declared in settings.py',
+                     settings.CSV_MAX_FILE_SIZE)
 
-        if bool(dryrun):
-            logging.info(f'{dryrunloggingstringprefix}S3 copy {filename}')
-        else:
-            aws.upload_to_s3(fullfilename, filename)
-            mssql.write_log_row('S3 UPLOAD', databasename, schemaname, '#N/A', settings.s3_bucketname + '/'
-                                + settings.s3_targetdir, filename, 'S', 'file ' + filename
-                                + ' copied to S3 bucket')
+    def aws_s3(self):
+        ###########################################################################################
+        """ 4: upload csv files to S3 """
+        ###########################################################################################
+        dry_run_str_prefix = self.dry_run_str_prefix
+        dry_run = self.dry_run
+        files = self.files
+        database_name = self.database_name
+        schema_name = self.schema_name
 
-    logging.info(f'{dryrunloggingstringprefix}Upload of the .csv files to the S3 bucket location '
-                 f'{settings.s3_bucketname}/{settings.s3_targetdir} finished')
+        aws.init_s3()
 
-    ####################################################################################################################
-    # 5: run Redshift COPY commands
-    ####################################################################################################################
+        logging.info('%s Upload of the .csv files to the S3 bucket location %s / %s starting',
+                     dry_run_str_prefix, settings.S3_BUCKET_NAME, settings.S3_TARGET_DIR)
 
-    aws.init_RedShift()
+        for file_name in files:
+            full_file_name = file_name.strip("'")
+            file_name = full_file_name.rsplit('\\', 1)[1]
 
-    logging.info(f'{dryrunloggingstringprefix}Copy of the .csv files to the AWS Redshift cluster starting')
+            if bool(dry_run):
+                logging.info('%s S3 copy %s', dry_run_str_prefix, file_name)
+            else:
+                aws.upload_to_s3(full_file_name, file_name)
+                mssql.write_log_row('S3 UPLOAD', database_name, schema_name, '#N/A',
+                                    settings.S3_BUCKET_NAME + '/' + settings.S3_TARGET_DIR,
+                                    file_name, 'S', 'file ' + file_name + ' copied to S3 bucket')
 
-    for filename in files:
-        fullfilename = filename.strip("'")
-        filename = fullfilename.rsplit('\\', 1)[1]
+        logging.info('%s Upload of the .csv files to the S3 bucket location %s / %s finished',
+                     dry_run_str_prefix, settings.S3_BUCKET_NAME, settings.S3_TARGET_DIR)
 
-        # TODO AWS Redshift tablename set as the filename without the .csv extension and the timestamp
-        # TODO add settings.py value for AWS vacuum tablename command possibility
-        tablename = filename[0:(len(filename)-24)]
+    def aws_redshift(self):
+        ###########################################################################################
+        """ 5: run Redshift COPY commands """
+        ###########################################################################################
+        dry_run_str_prefix = self.dry_run_str_prefix
+        files = self.files
+        dry_run = self.dry_run
+        database_name = self.database_name
+        schema_name = self.schema_name
 
-        if bool(dryrun):
-            logging.info(f'{dryrunloggingstringprefix}copy {tablename} {filename} from s3://{settings.s3_bucketname}')
-        else:
-            aws.copy_to_RedShift(tablename, filename)
-            mssql.write_log_row('RS UPLOAD', databasename, schemaname, tablename, settings.s3_bucketname + '/'
-                                + settings.s3_targetdir, filename, 'S', 'file ' + filename
-                                + ' copied to a Redshift table ' + tablename + ' from the S3 bucket')
+        #aws.init_redshift()
 
-    logging.info(f'{dryrunloggingstringprefix}Copy of the .csv files to the AWS Redshift cluster finished')
+        logging.info('%s Copy of the .csv files to the AWS Redshift cluster starting',
+                     dry_run_str_prefix)
 
-    ####################################################################################################################
-    # 6: close DB connections
-    ####################################################################################################################
+        for file_name in files:
+            full_file_name = file_name.strip("'")
+            file_name = full_file_name.rsplit('\\', 1)[1]
 
-    mssql.close()
-    aws.close_RedShift()
+            # TODO AWS Redshift tablename set as the filename without the .csv extension
+            # TODO and the timestamp
+            # TODO add settings.py value for AWS vacuum tablename command possibility
+            table_name = file_name[0:(len(file_name)-24)]
 
-    logging.info(f'Program ran successfully!')
+            if bool(dry_run):
+                logging.info('%s copy %s %s from s3://%s',
+                             dry_run_str_prefix, table_name, file_name,
+                             settings.S3_BUCKET_NAME)
+            else:
+                aws.copy_to_redshift(table_name, file_name)
+                mssql.write_log_row('RS UPLOAD', database_name, schema_name, table_name,
+                                    settings.S3_BUCKET_NAME + '/' + settings.S3_TARGET_DIR,
+                                    file_name, 'S', 'file ' + file_name +
+                                    ' copied to a Redshift table ' + table_name +
+                                    ' from the S3 bucket')
+
+        logging.info('%s Copy of the .csv files to the AWS Redshift cluster finished',
+                     dry_run_str_prefix)
+
+    def close_conn(self):
+        ###########################################################################################
+        """ 6: close DB connections """
+        ###########################################################################################
+        # mssql.close()
+        # aws.close_redshift()
+
+    def main(self):
+        ###########################################################################################
+        """ 7: orchestrate project flow """
+        ###########################################################################################
+        # set logging levels for main function console output
+        logging.getLogger().setLevel(logging.INFO)
+        logging.getLogger("botocore").setLevel(logging.WARNING)
+
+        Runner.prepare_dir(self)
+        Runner.ms_sql(self)
+        Runner.file_size(self)
+        Runner.aws_s3(self)
+        Runner.aws_redshift(self)
+        Runner.close_conn(self)
+
+        logging.info('Program ran successfully!')
 
 
 if __name__ == "__main__":

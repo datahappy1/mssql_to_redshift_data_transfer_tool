@@ -11,21 +11,21 @@ def test_connect():
         mssql.init()
         assertion = assertion + 1
     except ConnectionError:
-        logging.info(f'Connection to MSSQL failed')
+        logging.info('Connection to MSSQL failed')
         pass
 
     try:
         aws.init_s3()
         assertion = assertion + 1
     except ConnectionError:
-        logging.info(f'Connection to AWS S3 failed')
+        logging.info('Connection to AWS S3 failed')
         pass
 
     try:
-        aws.init_RedShift()
+        aws.init_redshift()
         assertion = assertion + 1
     except ConnectionError:
-        logging.info(f'Connection to AWS Redshift failed')
+        logging.info('Connection to AWS Redshift failed')
         pass
 
     assert assertion == 3
