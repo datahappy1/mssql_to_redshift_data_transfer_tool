@@ -14,14 +14,8 @@ def str_split(ret):
     :param ret:
     :return: stripped and splitted ret str
     """
-    try:
-        ret = str(ret).strip('()').split(',')
-        return ret
-    except Exception as ex:
-        logging.error("Could not strip or split the source variable %s", ret)
-        logging.error(ex)
-        sys.exit(1)
-
+    ret = str(ret).strip('()').split(',')
+    return ret
 
 def env_vars():
     """

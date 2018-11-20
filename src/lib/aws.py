@@ -1,13 +1,12 @@
 """ AWS Library """
-
+import logging
+import sys
+import boto3
+import psycopg2
 from boto3.s3.transfer import S3Transfer
 from boto3.exceptions import Boto3Error, S3UploadFailedError
 from src.settings import S3_BUCKET_NAME, S3_TARGET_DIR, REDSHIFT_DB
 from src.lib.utils import decode_env_vars
-import boto3
-import psycopg2
-import logging
-import sys
 
 # set logging levels for aws module console output
 logging.getLogger().setLevel(logging.INFO)
@@ -18,13 +17,13 @@ def init_s3():
     Initiate AWS S3 bucket
     :return: 0 on success, sys.exit on error
     """
-    global conn_s3
+    global CONN_S3
 
     try:
         aws_access_key_id = decode_env_vars("aws_access_key_id")
         aws_secret_access_key = decode_env_vars("aws_secret_access_key")
 
-        conn_s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
+        CONN_S3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
                                aws_secret_access_key=aws_secret_access_key)
 
         logging.info('AWS S3 set boto3.client success')
@@ -37,18 +36,18 @@ def init_s3():
 def upload_to_s3(full_file_name, file_name):
     """
     Upload to S3
-    :param fullfilename:
-    :param filename:
+    :param full_file_name:
+    :param file_name:
     :return: 0 on success, sys.exit on error
     """
     try:
         bucket_name = S3_BUCKET_NAME
         target_dir = S3_TARGET_DIR
 
-        transfer = S3Transfer(conn_s3)
+        transfer = S3Transfer(CONN_S3)
         transfer.upload_file(full_file_name, bucket_name, target_dir + "/" + file_name)
-        logging.info(f'File {file_name} uploaded successfully, target bucket: {bucket_name}, '
-                     f'target folder: {target_dir}')
+        logging.info('%s file uploaded successfully, target bucket: %s, target folder: %s',
+                     file_name, bucket_name, target_dir)
         return 0
     except S3UploadFailedError:
         logging.error('AWS S3 upload failed, S3UploadFailedError')
@@ -60,7 +59,7 @@ def init_redshift():
     Initiate AWS Redshift
     :return: 0 on success, sys.exit on error
     """
-    global conn_redshift
+    global CONN_REDSHIFT
 
     try:
         redshift_host = decode_env_vars("redshift_host")
@@ -70,8 +69,9 @@ def init_redshift():
 
         redshift_database = REDSHIFT_DB
 
-        conn_redshift = psycopg2.connect(dbname=redshift_database, host=redshift_host, port=redshift_port,
-                                         user=redshift_user, password=redshift_pass)
+        CONN_REDSHIFT = psycopg2.connect(dbname=redshift_database, host=redshift_host,
+                                         port=redshift_port, user=redshift_user,
+                                         password=redshift_pass)
 
         logging.info('AWS Redshift connection initiated')
         return 0
@@ -85,7 +85,7 @@ def close_redshift():
     Close AWS Redshift connection
     :return: 0 on success
     """
-    conn_redshift.close()
+    CONN_REDSHIFT.close()
     logging.info('AWS Redshift connection closed')
     return 0
 
@@ -101,7 +101,7 @@ def copy_to_redshift(table_name, file_name):
         aws_access_key_id = decode_env_vars("aws_access_key_id")
         aws_secret_access_key = decode_env_vars("aws_secret_access_key")
 
-        cur = conn_redshift.cursor()
+        cur = CONN_REDSHIFT.cursor()
         cur.execute("begin;")
 
         copy_redshift_string = 'copy ' + table_name + " from 's3://" + S3_BUCKET_NAME + '/' \
