@@ -1,24 +1,25 @@
+""" Installation securables obfuscator """
+
 import base64
 import urllib.parse
 
-config_values_in = ["mssql_host", "mssql_port", "mssql_user", "mssql_pass",
+CONFIG_VALUES_IN = ["mssql_host", "mssql_port", "mssql_user", "mssql_pass",
                     "aws_access_key_id", "aws_secret_access_key",
                     "redshift_host", "redshift_port", "redshift_user", "redshift_pass"]
 
-env_var_out = {}
+ENV_VAR_OUT = {}
 
-for i in config_values_in:
-    config_values_in = input(i + ":")
-    config_values_in = urllib.parse.quote_plus(config_values_in)
-    config_values_in = bytes(config_values_in, encoding='utf-8')
+for i in CONFIG_VALUES_IN:
+    CONFIG_VALUES_IN = input(i + ":")
+    CONFIG_VALUES_IN = urllib.parse.quote_plus(CONFIG_VALUES_IN)
+    CONFIG_VALUES_IN = bytes(CONFIG_VALUES_IN, encoding='utf-8')
 
-    encoded = base64.b16encode(config_values_in)
+    encoded = base64.b16encode(CONFIG_VALUES_IN)
     encoded = str(encoded).rstrip("'").lstrip("b'")
-    env_var_out[i] = encoded
+    ENV_VAR_OUT[i] = encoded
 
-env_var_out = str(env_var_out).replace('\'', '"')
+ENV_VAR_OUT = str(ENV_VAR_OUT).replace('\'', '"')
 
 # now set the environment variable for your user
-print(f"Environment variable name: mssql_to_redshift_data_transfer_tool")
-print(f"Environment variable value: {env_var_out}")
-
+print("Environment variable name: mssql_to_redshift_data_transfer_tool")
+print("Environment variable value: %s", ENV_VAR_OUT)

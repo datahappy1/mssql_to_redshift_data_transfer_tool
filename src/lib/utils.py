@@ -1,3 +1,5 @@
+""" common utility functions """
+
 import os
 import sys
 import logging
@@ -7,26 +9,35 @@ import urllib.parse
 
 
 def str_split(ret):
-    try:
-        ret = str(ret).strip('()').split(',')
-        return ret
-    except Exception as ex:
-        logging.error(f"Could not strip or split the source variable {ret}")
-        logging.error(ex)
-        sys.exit(1)
-
+    """
+    String splitter
+    :param ret:
+    :return: stripped and splitted ret str
+    """
+    ret = str(ret).strip('()').split(',')
+    return ret
 
 def env_vars():
+    """
+    Get environment variable value
+    :return: environment variable
+    """
     try:
         env_variables = os.getenv('mssql_to_redshift_data_transfer_tool')
         return env_variables
     except Exception as ex:
-        logging.error(f"Could not retrieve environment variable mssql_to_redshift_data_transfer_tool")
+        logging.error("Could not retrieve environment variable "
+                      "mssql_to_redshift_data_transfer_tool")
         logging.error(ex)
         sys.exit(1)
 
 
 def decode_env_vars(key):
+    """
+    Decode from binary 16 environment variable
+    :param key:
+    :return: decoded key
+    """
     try:
         env_var_json = json.loads(env_vars())
 
@@ -36,6 +47,6 @@ def decode_env_vars(key):
         value = urllib.parse.unquote_plus(value)
         return value
     except Exception as ex:
-        logging.error(f"Could not decode environment variable configuration value {key} ")
+        logging.error("Could not decode environment variable configuration value %s", key)
         logging.error(ex)
         sys.exit(1)
