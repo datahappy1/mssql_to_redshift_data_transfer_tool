@@ -1,3 +1,5 @@
+""" MSSQL to Redshift data transfer tool setup """
+
 from setuptools import setup
 
 setup(
@@ -8,6 +10,7 @@ setup(
     license='MIT',
     author='datahappy1',
     author_email='',
-    description='Python 3.7 tool to extract data out of a MSSQL database and load it into an AWS Redshift Cluster',
+    description='Python 3.7 tool to extract data out of a MSSQL database '
+                'and load it into an AWS Redshift Cluster',
     install_requires=['boto3', 'psycopg2', 'pymssql']
 )
