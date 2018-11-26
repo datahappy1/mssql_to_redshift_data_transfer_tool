@@ -1,8 +1,8 @@
 """ MSSQL Library """
 
-import pymssql
 import logging
 import sys
+import pymssql
 from src.settings import MS_SQL_DB
 from src.lib.utils import decode_env_vars
 
@@ -15,7 +15,7 @@ def init():
     Initiate MSSQL Server
     :return: 0 on success, sys.exit on error
     """
-    global conn
+    global CONN
 
     try:
         mssql_host = decode_env_vars("mssql_host")
@@ -23,7 +23,7 @@ def init():
         mssql_user = decode_env_vars("mssql_user")
         mssql_pass = decode_env_vars("mssql_pass")
 
-        conn = pymssql.connect(server=mssql_host,
+        CONN = pymssql.connect(server=mssql_host,
                                port=mssql_port,
                                user=mssql_user,
                                password=mssql_pass,
@@ -42,7 +42,7 @@ def close():
     Close MSSQL Connection
     :return: 0
     """
-    conn.close()
+    CONN.close()
     logging.info('SQL Server connection closed')
     return 0
 
@@ -50,14 +50,14 @@ def close():
 def run_extract_filter_bcp(database_name, schema_name, target_directory, dry_run):
     """
     Fire the extract_filter_bcp stored procedure
-    :param databasename:
-    :param schemaname:
-    :param targetdirectory:
-    :param dryrun:
+    :param database_name:
+    :param schema_name:
+    :param target_directory:
+    :param dry_run:
     :return: ret on success, sys.exit on error
     """
     try:
-        cursor = conn.cursor()
+        cursor = CONN.cursor()
         cursor.execute("EXEC [mngmt].[Extract_Filter_BCP] '"
                        + database_name + "','"
                        + schema_name + "','"
@@ -86,7 +86,7 @@ def write_log_row(execution_step, database_name, schema_name, table_name, target
     :return: 0 on success, logging.warning on error
     """
     try:
-        cursor = conn.cursor()
+        cursor = CONN.cursor()
         cursor.execute("EXEC [mngmt].[ExecutionLogs_Insert]"
                        + " @executionstep='" + execution_step + "',"
                        + " @databasename='" + database_name + "',"

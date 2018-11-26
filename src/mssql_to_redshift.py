@@ -30,7 +30,7 @@ def prepare_args():
 
     dry_run = parsed.dryrun
     # arg parse bool data type known bug workaround
-    if dry_run.lower() in ('no', 'false', 'f', 'n', '0'):
+    if dry_run.lower() in ('no', 'false', 'f', 'n', 0):
         dry_run = False
         dry_run_str_prefix = ''
     else:
@@ -42,7 +42,7 @@ def prepare_args():
     Runner.main(obj)
 
 
-class Runner(object):
+class Runner:
     """
     Class Runner handling the functions for the program flow
     """
@@ -76,15 +76,19 @@ class Runner(object):
         ###########################################################################################
         """ 2: execute the [mngmt].[Extract_Filter_BCP] MS SQL Stored Procedure with pymssql """
         ###########################################################################################
+        database_name = self.database_name
+        schema_name = self.schema_name
+        target_directory = self.target_directory
+        dry_run = self.dry_run
         dry_run_str_prefix = self.dry_run_str_prefix
 
-        # mssql.init()
+        mssql.init()
 
         logging.info('%s Generating .csv files using bcp in a stored procedure starting',
                      dry_run_str_prefix)
 
-        #ret = mssql.run_extract_filter_bcp(database_name, schema_name, target_directory, dry_run)
-        ret = '(abc.csv)'
+        ret = mssql.run_extract_filter_bcp(database_name, schema_name, target_directory, dry_run)
+        # ret = '(abc.csv)'
         self.ret = ret
 
         if "MS SQL error, details:" in ret:
@@ -160,7 +164,7 @@ class Runner(object):
         database_name = self.database_name
         schema_name = self.schema_name
 
-        #aws.init_redshift()
+        aws.init_redshift()
 
         logging.info('%s Copy of the .csv files to the AWS Redshift cluster starting',
                      dry_run_str_prefix)
@@ -168,16 +172,12 @@ class Runner(object):
         for file_name in files:
             full_file_name = file_name.strip("'")
             file_name = full_file_name.rsplit('\\', 1)[1]
-
-            # TODO AWS Redshift tablename set as the filename without the .csv extension
-            # TODO and the timestamp
-            # TODO add settings.py value for AWS vacuum tablename command possibility
             table_name = file_name[0:(len(file_name)-24)]
 
             if bool(dry_run):
-                logging.info('%s copy %s %s from s3://%s',
-                             dry_run_str_prefix, table_name, file_name,
-                             settings.S3_BUCKET_NAME)
+                logging.info('%s copy %s from s3://%s/%s/%s',
+                             dry_run_str_prefix, table_name, settings.S3_BUCKET_NAME,
+                             settings.S3_TARGET_DIR, file_name)
             else:
                 aws.copy_to_redshift(table_name, file_name)
                 mssql.write_log_row('RS UPLOAD', database_name, schema_name, table_name,
@@ -193,8 +193,8 @@ class Runner(object):
         ###########################################################################################
         """ 6: close DB connections """
         ###########################################################################################
-        # mssql.close()
-        # aws.close_redshift()
+        mssql.close()
+        aws.close_redshift()
 
     def main(self):
         ###########################################################################################
