@@ -134,7 +134,7 @@ class Runner:
         database_name = self.database_name
         schema_name = self.schema_name
 
-        # aws.init_s3()
+        aws.init_s3()
 
         logging.info('%s Upload of the .csv files to the S3 bucket location %s / %s starting',
                      dry_run_str_prefix, settings.S3_BUCKET_NAME, settings.S3_TARGET_DIR)
@@ -164,7 +164,7 @@ class Runner:
         database_name = self.database_name
         schema_name = self.schema_name
 
-        # aws.init_redshift()
+        aws.init_redshift()
 
         logging.info('%s Copy of the .csv files to the AWS Redshift cluster starting',
                      dry_run_str_prefix)
@@ -172,10 +172,6 @@ class Runner:
         for file_name in files:
             full_file_name = file_name.strip("'")
             file_name = full_file_name.rsplit('\\', 1)[1]
-
-            # TODO AWS Redshift tablename set as the filename without the .csv extension
-            # TODO and the timestamp
-            # TODO add settings.py value for AWS vacuum tablename command possibility
             table_name = file_name[0:(len(file_name)-24)]
 
             if bool(dry_run):
@@ -198,7 +194,7 @@ class Runner:
         """ 6: close DB connections """
         ###########################################################################################
         mssql.close()
-        # aws.close_redshift()
+        aws.close_redshift()
 
     def main(self):
         ###########################################################################################
