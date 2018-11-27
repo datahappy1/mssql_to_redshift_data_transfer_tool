@@ -4,8 +4,7 @@ import os
 from src import mssql_to_redshift
 
 
-# assuming we can extract a test table to a csv file, upload to S3
-# the Redshift copy command is looking as expected and program returns success
+# assuming we can run the full dry run flow and the program returns success
 def test_integrate():
     """
     main test integration function
