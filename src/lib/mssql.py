@@ -13,43 +13,43 @@ logging.getLogger().setLevel(logging.INFO)
 def init():
     """
     Initiate MSSQL Server
-    :return: 0 on success, sys.exit on error
+    :return: conn_mssql on success, sys.exit on error
     """
-    global CONN
-
     try:
         mssql_host = decode_env_vars("mssql_host")
         mssql_port = decode_env_vars("mssql_port")
         mssql_user = decode_env_vars("mssql_user")
         mssql_pass = decode_env_vars("mssql_pass")
 
-        CONN = pymssql.connect(server=mssql_host,
-                               port=mssql_port,
-                               user=mssql_user,
-                               password=mssql_pass,
-                               database=MS_SQL_DB,
-                               autocommit=True)
+        conn_mssql = pymssql.connect(server=mssql_host,
+                                     port=mssql_port,
+                                     user=mssql_user,
+                                     password=mssql_pass,
+                                     database=MS_SQL_DB,
+                                     autocommit=True)
 
         logging.info('SQL Server connection initiated')
-        return 0
+        return conn_mssql
     except ConnectionError:
         logging.error('SQL Server connection failed')
         sys.exit(1)
 
 
-def close():
+def close(conn_mssql):
     """
     Close MSSQL Connection
+    :param: conn_mssql
     :return: 0
     """
-    CONN.close()
+    conn_mssql.close()
     logging.info('SQL Server connection closed')
     return 0
 
 
-def run_extract_filter_bcp(database_name, schema_name, target_directory, dry_run):
+def run_extract_filter_bcp(conn_mssql, database_name, schema_name, target_directory, dry_run):
     """
     Fire the extract_filter_bcp stored procedure
+    :param conn_mssql:
     :param database_name:
     :param schema_name:
     :param target_directory:
@@ -57,7 +57,7 @@ def run_extract_filter_bcp(database_name, schema_name, target_directory, dry_run
     :return: ret on success, sys.exit on error
     """
     try:
-        cursor = CONN.cursor()
+        cursor = conn_mssql.cursor()
         cursor.execute("EXEC [mngmt].[Extract_Filter_BCP] '"
                        + database_name + "','"
                        + schema_name + "','"
@@ -71,10 +71,11 @@ def run_extract_filter_bcp(database_name, schema_name, target_directory, dry_run
         sys.exit(1)
 
 
-def write_log_row(execution_step, database_name, schema_name, table_name, target_directory,
-                  file_name, status, message):
+def write_log_row(conn_mssql, execution_step, database_name, schema_name, table_name,
+                  target_directory, file_name, status, message):
     """
     Fire the ExecutionLogs_Insert stored procedure
+    :param conn_mssql:
     :param execution_step:
     :param database_name:
     :param schema_name:
@@ -86,7 +87,7 @@ def write_log_row(execution_step, database_name, schema_name, table_name, target
     :return: 0 on success, logging.warning on error
     """
     try:
-        cursor = CONN.cursor()
+        cursor = conn_mssql.cursor()
         cursor.execute("EXEC [mngmt].[ExecutionLogs_Insert]"
                        + " @executionstep='" + execution_step + "',"
                        + " @databasename='" + database_name + "',"

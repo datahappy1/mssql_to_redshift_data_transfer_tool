@@ -19,7 +19,7 @@ def test_integrate():
 
     obj = mssql_to_redshift.Runner(database_name='MSSQL_to_Redshift', schema_name='mngmt',
                                    target_directory=target_dir, dry_run=1, dry_run_str_prefix='',
-                                   files='', ret='')
+                                   files='', ret='', conn_mssql='', conn_s3='', conn_redshift='')
 
     mssql_to_redshift.Runner.main(obj)
 
@@ -31,9 +31,9 @@ def test_integrate():
             success_found = 1
         else:
             pass
-    #print(success_found)
+    print(success_found)
 
     assert success_found == 1
 
 
-#test_integrate()
+test_integrate()
