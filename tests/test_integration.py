@@ -7,7 +7,7 @@ from src import mssql_to_redshift
 
 
 # assuming we can extract a test table to a csv file, upload to S3
-# and the Redshift copy command is looking as expected
+# the Redshift copy command is looking as expected and program returns success
 def test_integrate():
     """
     main test integration function
@@ -23,20 +23,17 @@ def test_integrate():
 
     mssql_to_redshift.Runner.main(obj)
 
-    s3_command_found = 0
-    # redshift_command_found = 0
+    success_found = 0
 
     for line in log_stream.getvalue().splitlines():
         print(line)
-        if 'Dryrun S3 copy Integration_test_table' in line:
-            s3_command_found = 1
-        # elif 'Dryrun copy Integration_test_table Integration_test_table_' in line:
-            # redshift_command_found = 1
+        if 'Program ran successfully!' in line:
+            success_found = 1
         else:
             pass
-    print(s3_command_found)
-    # assert s3_command_found == 1
-    # assert s3_command_found + redshift_command_found == 2
+    #print(success_found)
+
+    assert success_found == 1
 
 
-test_integrate()
+#test_integrate()

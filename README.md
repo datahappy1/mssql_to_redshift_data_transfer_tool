@@ -1,7 +1,7 @@
 # mssql_to_redshift_data_transfer_tool
 MSSQL to AWS Redshift data transfer tool written in Python 3.7
 
-[pylint]: https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/blob/master/rating.svg
+![](https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/blob/master/rating.svg)
 
 This tool is able to migrate data from your MSSQL Database to AWS Redshift.
 It consumes arguments defining: 

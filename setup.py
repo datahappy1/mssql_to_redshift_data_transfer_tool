@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 """ Setup.py """
+=======
+""" MSSQL to Redshift data transfer tool setup """
+
+>>>>>>> 4753e0b43727d92c31e78d62d8cba21eea236d00
 from setuptools import setup
 
 setup(
