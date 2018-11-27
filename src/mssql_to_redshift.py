@@ -214,6 +214,7 @@ class Runner:
         Runner.close_conn(self)
 
         logging.info('Program ran successfully!')
+        return 0
 
 
 if __name__ == "__main__":
