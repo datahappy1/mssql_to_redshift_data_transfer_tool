@@ -17,19 +17,19 @@ def str_split(ret):
     ret = str(ret).strip('()').split(',')
     return ret
 
+
 def env_vars():
     """
     Get environment variable value
     :return: environment variable
     """
-    try:
-        env_variables = os.getenv('mssql_to_redshift_data_transfer_tool')
-        return env_variables
-    except Exception as ex:
+    env_variables = os.getenv('mssql_to_redshift_data_transfer_tool')
+    if env_variables is None:
         logging.error("Could not retrieve environment variable "
                       "mssql_to_redshift_data_transfer_tool")
-        logging.error(ex)
         sys.exit(1)
+    else:
+        return env_variables
 
 
 def decode_env_vars(key):
@@ -46,7 +46,6 @@ def decode_env_vars(key):
         value = str(value).lstrip("b'").rstrip("'")
         value = urllib.parse.unquote_plus(value)
         return value
-    except Exception as ex:
+    except KeyError:
         logging.error("Could not decode environment variable configuration value %s", key)
-        logging.error(ex)
         sys.exit(1)
