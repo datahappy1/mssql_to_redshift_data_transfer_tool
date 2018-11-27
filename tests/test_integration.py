@@ -1,8 +1,6 @@
 """ integration test """
 
 import os
-import logging
-from io import StringIO
 from src import mssql_to_redshift
 
 
@@ -14,26 +12,17 @@ def test_integrate():
     :return:
     """
     target_dir = os.getcwd().rstrip('tests') + 'files'
-    log_stream = StringIO()
-    logging.basicConfig(stream=log_stream, level=logging.INFO)
 
     obj = mssql_to_redshift.Runner(database_name='MSSQL_to_Redshift', schema_name='mngmt',
                                    target_directory=target_dir, dry_run=1, dry_run_str_prefix='',
-                                   files='', ret='')
+                                   files='', ret='', conn_mssql='', conn_s3='', conn_redshift='')
 
-    mssql_to_redshift.Runner.main(obj)
-
+    ret = mssql_to_redshift.Runner.main(obj)
     success_found = 0
 
-    for line in log_stream.getvalue().splitlines():
-        print(line)
-        if 'Program ran successfully!' in line:
-            success_found = 1
-        else:
-            pass
-    #print(success_found)
+    if ret == 0:
+        success_found = 1
+    else:
+        pass
 
     assert success_found == 1
-
-
-#test_integrate()
