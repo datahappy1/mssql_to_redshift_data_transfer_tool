@@ -2,9 +2,9 @@
 import logging
 import sys
 import boto3
-import psycopg2
 from boto3.s3.transfer import S3Transfer
 from boto3.exceptions import Boto3Error, S3UploadFailedError
+import psycopg2
 from src.settings import S3_BUCKET_NAME, S3_TARGET_DIR, REDSHIFT_DB
 from src.lib.utils import decode_env_vars
 
