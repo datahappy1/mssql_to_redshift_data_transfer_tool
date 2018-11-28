@@ -62,7 +62,7 @@ A permanent solution is to:<br />
 
 ### First run on Linux:<br />
 You need to set the PYTHONPATH like this:
-`export PYTHONPATH=$PYTHONPATH:/home/pavelp/GIT_PROJECTS/mssql_to_redshift_data_transfer_tool/`<br />
+`export PYTHONPATH=$PYTHONPATH:/home/your_user/your_git_projects/mssql_to_redshift_data_transfer_tool/`<br />
 <br />
 A permanent solution is to:<br />
 TODO
