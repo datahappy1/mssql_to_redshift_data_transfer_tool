@@ -1,7 +1,7 @@
 # mssql_to_redshift_data_transfer_tool
 MSSQL to AWS Redshift data transfer tool written in Python 3.7
 
-![](https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/blob/master/rating.svg)
+![](https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/blob/master/docs/img/rating.svg)
 
 This tool is able to migrate data from your MSSQL Database to AWS Redshift.
 It consumes arguments defining: 
@@ -61,7 +61,12 @@ A permanent solution is to:<br />
 <br />
 
 ### First run on Linux:<br />
+You need to set the PYTHONPATH like this:
+`export PYTHONPATH=$PYTHONPATH:/home/your_user/your_git_projects/mssql_to_redshift_data_transfer_tool/`<br />
+<br />
+A permanent solution is to:<br />
 TODO
+
 
 #### Pytest testing:<br />
 Pytest (version 3.9.1) integration and connectivity tests are also a part of this tool.

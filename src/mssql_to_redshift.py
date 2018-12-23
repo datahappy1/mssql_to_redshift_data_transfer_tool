@@ -38,7 +38,7 @@ def prepare_args():
         dry_run_str_prefix = 'Dry run '
 
     obj = Runner(database_name, schema_name, target_directory, dry_run, dry_run_str_prefix,
-                 files='', ret='')
+                 files='', ret='', conn_mssql='', conn_s3='', conn_redshift='')
     Runner.main(obj)
 
 
@@ -47,7 +47,7 @@ class Runner:
     Class Runner handling the functions for the program flow
     """
     def __init__(self, database_name, schema_name, target_directory, dry_run,
-                 dry_run_str_prefix, files, ret):
+                 dry_run_str_prefix, files, ret, conn_mssql, conn_s3, conn_redshift):
         self.database_name = database_name
         self.schema_name = schema_name
         self.target_directory = target_directory
@@ -55,6 +55,9 @@ class Runner:
         self.dry_run_str_prefix = dry_run_str_prefix
         self.files = files
         self.ret = ret
+        self.conn_mssql = conn_mssql
+        self.conn_s3 = conn_s3
+        self.conn_redshift = conn_redshift
 
     def prepare_dir(self):
         ###########################################################################################
@@ -71,7 +74,6 @@ class Runner:
             logging.error('Could not create the %s folder, OSError', target_directory)
             sys.exit(1)
 
-    # def ms_sql(self, dry_run_str_prefix, database_name, schema_name, target_directory, dry_run):
     def ms_sql(self):
         ###########################################################################################
         """ 2: execute the [mngmt].[Extract_Filter_BCP] MS SQL Stored Procedure with pymssql """
@@ -82,13 +84,13 @@ class Runner:
         dry_run = self.dry_run
         dry_run_str_prefix = self.dry_run_str_prefix
 
-        mssql.init()
+        self.conn_mssql = mssql.init()
 
         logging.info('%s Generating .csv files using bcp in a stored procedure starting',
                      dry_run_str_prefix)
 
-        ret = mssql.run_extract_filter_bcp(database_name, schema_name, target_directory, dry_run)
-        # ret = '(abc.csv)'
+        ret = mssql.run_extract_filter_bcp(self.conn_mssql, database_name, schema_name,
+                                           target_directory, dry_run)
         self.ret = ret
 
         if "MS SQL error, details:" in ret:
@@ -99,8 +101,8 @@ class Runner:
             logging.error('%s No .csv files generated', dry_run_str_prefix)
             sys.exit(1)
         else:
-            logging.info('%s Generating .csv files using bcp in a stored procedure finished',
-                         dry_run_str_prefix)
+            logging.info('%s Generating .csv files using bcp in a stored procedure '
+                         'finished', dry_run_str_prefix)
 
     def file_size(self):
         ###########################################################################################
@@ -134,7 +136,7 @@ class Runner:
         database_name = self.database_name
         schema_name = self.schema_name
 
-        aws.init_s3()
+        self.conn_s3 = aws.init_s3()
 
         logging.info('%s Upload of the .csv files to the S3 bucket location %s / %s starting',
                      dry_run_str_prefix, settings.S3_BUCKET_NAME, settings.S3_TARGET_DIR)
@@ -146,9 +148,9 @@ class Runner:
             if bool(dry_run):
                 logging.info('%s S3 copy %s', dry_run_str_prefix, file_name)
             else:
-                aws.upload_to_s3(full_file_name, file_name)
-                mssql.write_log_row('S3 UPLOAD', database_name, schema_name, '#N/A',
-                                    settings.S3_BUCKET_NAME + '/' + settings.S3_TARGET_DIR,
+                aws.upload_to_s3(self.conn_s3, full_file_name, file_name)
+                mssql.write_log_row(self.conn_mssql, 'S3 UPLOAD', database_name, schema_name,
+                                    '#N/A', settings.S3_BUCKET_NAME + '/' + settings.S3_TARGET_DIR,
                                     file_name, 'S', 'file ' + file_name + ' copied to S3 bucket')
 
         logging.info('%s Upload of the .csv files to the S3 bucket location %s / %s finished',
@@ -164,7 +166,7 @@ class Runner:
         database_name = self.database_name
         schema_name = self.schema_name
 
-        aws.init_redshift()
+        self.conn_redshift = aws.init_redshift()
 
         logging.info('%s Copy of the .csv files to the AWS Redshift cluster starting',
                      dry_run_str_prefix)
@@ -179,10 +181,10 @@ class Runner:
                              dry_run_str_prefix, table_name, settings.S3_BUCKET_NAME,
                              settings.S3_TARGET_DIR, file_name)
             else:
-                aws.copy_to_redshift(table_name, file_name)
-                mssql.write_log_row('RS UPLOAD', database_name, schema_name, table_name,
-                                    settings.S3_BUCKET_NAME + '/' + settings.S3_TARGET_DIR,
-                                    file_name, 'S', 'file ' + file_name +
+                aws.copy_to_redshift(self.conn_redshift, table_name, file_name)
+                mssql.write_log_row(self.conn_mssql, 'RS UPLOAD', database_name, schema_name,
+                                    table_name, settings.S3_BUCKET_NAME + '/' +
+                                    settings.S3_TARGET_DIR, file_name, 'S', 'file ' + file_name +
                                     ' copied to a Redshift table ' + table_name +
                                     ' from the S3 bucket')
 
@@ -193,8 +195,8 @@ class Runner:
         ###########################################################################################
         """ 6: close DB connections """
         ###########################################################################################
-        mssql.close()
-        aws.close_redshift()
+        mssql.close(self.conn_mssql)
+        aws.close_redshift(self.conn_redshift)
 
     def main(self):
         ###########################################################################################
@@ -212,6 +214,7 @@ class Runner:
         Runner.close_conn(self)
 
         logging.info('Program ran successfully!')
+        return 0
 
 
 if __name__ == "__main__":
