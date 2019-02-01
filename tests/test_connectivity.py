@@ -12,6 +12,7 @@ def test_connect_mssql():
     conn_mssql = mssql.init()
     cursor = conn_mssql.cursor()
     cursor.execute("SELECT 1")
+    test = None
     test = str(cursor.fetchone())
     mssql.close(conn_mssql)
     assert test == "(1,)"
@@ -26,6 +27,7 @@ def test_connect_redshift():
     conn_redshift = aws.init_redshift()
     cursor = conn_redshift.cursor()
     cursor.execute("SELECT 1")
+    test = None
     test = str(cursor.fetchone())
     aws.close_redshift(conn_redshift)
     assert test == "(1,)"
@@ -39,7 +41,7 @@ def test_s3_init():
     AWS S3 test connectivity function
     :return:
     """
-    test = 1
+    test = None
     try:
         conn_s3 = aws.init_s3()
         test = aws.check_bucket(conn_s3)
