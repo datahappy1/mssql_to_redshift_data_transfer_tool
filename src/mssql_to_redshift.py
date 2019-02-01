@@ -37,8 +37,7 @@ def prepare_args():
         dry_run = True
         dry_run_str_prefix = 'Dry run '
 
-    obj = Runner(database_name, schema_name, target_directory, dry_run, dry_run_str_prefix,
-                 files='', ret='', conn_mssql='', conn_s3='', conn_redshift='')
+    obj = Runner(database_name, schema_name, target_directory, dry_run, dry_run_str_prefix)
     Runner.main(obj)
 
 
@@ -47,17 +46,17 @@ class Runner:
     Class Runner handling the functions for the program flow
     """
     def __init__(self, database_name, schema_name, target_directory, dry_run,
-                 dry_run_str_prefix, files, ret, conn_mssql, conn_s3, conn_redshift):
+                 dry_run_str_prefix):
         self.database_name = database_name
         self.schema_name = schema_name
         self.target_directory = target_directory
         self.dry_run = dry_run
         self.dry_run_str_prefix = dry_run_str_prefix
-        self.files = files
-        self.ret = ret
-        self.conn_mssql = conn_mssql
-        self.conn_s3 = conn_s3
-        self.conn_redshift = conn_redshift
+        self.files = None
+        self.ret = None
+        self.conn_mssql = None
+        self.conn_s3 = None
+        self.conn_redshift = None
 
     def prepare_dir(self):
         ###########################################################################################

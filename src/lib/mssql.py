@@ -30,8 +30,13 @@ def init():
 
         logging.info('SQL Server connection initiated')
         return conn_mssql
-    except ConnectionError:
-        logging.error('SQL Server connection failed')
+    except pymssql.InterfaceError:
+        logging.error("SQL Server connection failed."
+                      "A MSSQLDriverException has been caught.")
+        sys.exit(1)
+    except pymssql.DatabaseError:
+        logging.error("SQL Server connection failed."
+                      "A MSSQLDatabaseException has been caught.")
         sys.exit(1)
 
 
@@ -66,8 +71,8 @@ def run_extract_filter_bcp(conn_mssql, database_name, schema_name, target_direct
                        )
         ret = cursor.fetchone()[0]
         return ret
-    except ConnectionError:
-        logging.error("Stored Procedure Extract_Filter_BCP failed, ConnectionError")
+    except pymssql.Error:
+        logging.error("Stored Procedure Extract_Filter_BCP failed, pymssql Error")
         sys.exit(1)
 
 
@@ -99,5 +104,5 @@ def write_log_row(conn_mssql, execution_step, database_name, schema_name, table_
                        + " @message='" + message + "'"
                        )
         return 0
-    except ConnectionError:
-        logging.warning("Row not logged, ConnectionError")
+    except pymssql.Error:
+        logging.warning("Row not logged, pymssql Error")

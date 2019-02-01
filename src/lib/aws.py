@@ -3,7 +3,8 @@ import logging
 import sys
 import boto3
 from boto3.s3.transfer import S3Transfer
-from boto3.exceptions import Boto3Error, S3UploadFailedError
+from boto3.exceptions import S3UploadFailedError
+from botocore.exceptions import ClientError
 import psycopg2
 from src.settings import S3_BUCKET_NAME, S3_TARGET_DIR, REDSHIFT_DB
 from src.lib.utils import decode_env_vars
@@ -26,8 +27,8 @@ def init_s3():
 
         logging.info('AWS S3 set boto3.client success')
         return conn_s3
-    except Boto3Error:
-        logging.error('AWS S3 set boto3.client failed, Boto3Error')
+    except ClientError:
+        logging.error('AWS S3 set boto3.client failed, ClientError')
         sys.exit(1)
 
 
@@ -51,6 +52,23 @@ def upload_to_s3(conn_s3, full_file_name, file_name):
     except S3UploadFailedError:
         logging.error('AWS S3 upload failed, S3UploadFailedError')
         sys.exit(1)
+    except ClientError as ce:
+        logging.error('AWS S3 upload failed, ClientError', ce)
+        sys.exit(1)
+
+
+def list_bucket(conn_s3):
+    """
+    List objects available in my bucket set in settings.py
+    :param conn_s3:
+    :return: all the keys located in the bucket
+    """
+    try:
+        bucket_name = S3_BUCKET_NAME
+        for key in conn_s3.list_objects(Bucket=bucket_name)['Contents']:
+            return key['Key']
+    except boto3.exceptions.ResourceNotExistsError:
+        logging.warning('AWS S3 %s bucket is empty', bucket_name)
 
 
 def init_redshift():
