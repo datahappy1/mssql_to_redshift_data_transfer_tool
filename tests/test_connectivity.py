@@ -31,17 +31,17 @@ def test_connect_redshift():
     assert test == "(1,)"
 
 
-# assuming we can initiate a connection to AWS S3 bucket by listing
-# objects in the bucket we setup in settings.py
+# assuming we can initiate a connection to AWS S3 and checking
+# the bucket we setup in settings.py exists and that we can connect
+# if success, test_pass returns 0 used in assertion
 def test_s3_init():
     """
     AWS S3 test connectivity function
     :return:
     """
-    test_pass = 0
+    test_pass = 1
     try:
         conn_s3 = aws.init_s3()
-        aws.list_bucket(conn_s3)
-        test_pass = 1
+        test_pass = aws.check_bucket(conn_s3)
     finally:
-        assert test_pass == 1
+        assert test_pass == 0

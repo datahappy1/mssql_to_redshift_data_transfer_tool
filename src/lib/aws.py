@@ -54,19 +54,19 @@ def upload_to_s3(conn_s3, full_file_name, file_name):
         sys.exit(1)
 
 
-def list_bucket(conn_s3):
+def check_bucket(conn_s3):
     """
-    List objects available in my bucket set in settings.py
-    :param conn_s3:
-    :return: all the keys located in the bucket
+    Check if the s3 bucket set in settings.py exists or is available
+    :param conn_s3
+    :return: 0 if the bucket exists and we can access it
     """
     try:
         bucket_name = S3_BUCKET_NAME
-        for key in conn_s3.list_objects(Bucket=bucket_name)['Contents']:
-            keys = key['Key']
-        return keys
-    except boto3.exceptions.ResourceNotExistsError:
-        logging.warning('AWS S3 %s bucket is empty', bucket_name)
+        conn_s3.head_bucket(Bucket=bucket_name)
+        return 0
+    except ClientError:
+        logging.error('AWS S3 bucket used in settings.py not exists or not available')
+        sys.exit(1)
 
 
 def init_redshift():
