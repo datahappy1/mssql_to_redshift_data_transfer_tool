@@ -52,9 +52,6 @@ def upload_to_s3(conn_s3, full_file_name, file_name):
     except S3UploadFailedError:
         logging.error('AWS S3 upload failed, S3UploadFailedError')
         sys.exit(1)
-    except ClientError as ce:
-        logging.error('AWS S3 upload failed, ClientError', ce)
-        sys.exit(1)
 
 
 def list_bucket(conn_s3):
