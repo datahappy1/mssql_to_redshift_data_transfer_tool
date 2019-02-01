@@ -38,10 +38,10 @@ def test_s3_init():
     AWS S3 test connectivity function
     :return:
     """
-    out = 1
+    test_pass = 0
     try:
         conn_s3 = aws.init_s3()
         aws.list_bucket(conn_s3)
-        out = 0
+        test_pass = 1
     finally:
-        assert out == 0
+        assert test_pass == 1
