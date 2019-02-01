@@ -56,7 +56,7 @@ def upload_to_s3(conn_s3, full_file_name, file_name):
 
 def check_bucket(conn_s3):
     """
-    Check if the s3 bucket set in settings.py exists or is available
+    Check if the s3 bucket set in settings.py exists and is available
     :param conn_s3
     :return: 0 if the bucket exists and we can access it
     """
