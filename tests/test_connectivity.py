@@ -12,9 +12,9 @@ def test_connect_mssql():
     conn_mssql = mssql.init()
     cursor = conn_mssql.cursor()
     cursor.execute("SELECT 1")
-    test = str(cursor.fetchone())
+    test_mssql = str(cursor.fetchone())
     mssql.close(conn_mssql)
-    assert test == "(1,)"
+    assert test_mssql == "(1,)"
 
 
 # assuming we can initiate and query a connection cursor to AWS Redshift
@@ -26,22 +26,22 @@ def test_connect_redshift():
     conn_redshift = aws.init_redshift()
     cursor = conn_redshift.cursor()
     cursor.execute("SELECT 1")
-    test = str(cursor.fetchone())
+    test_rs = str(cursor.fetchone())
     aws.close_redshift(conn_redshift)
-    assert test == "(1,)"
+    assert test_rs == "(1,)"
 
 
 # assuming we can initiate a connection to AWS S3 and checking that
 # the bucket name we declare in settings.py exists and that we have access
-# if success, variable "test" returns 0 used for assertion
+# if success, variable "test_s3" returns 0 used for assertion
 def test_s3_init():
     """
     AWS S3 test connectivity function
     :return:
     """
-    test = None
+    test_s3 = None
     try:
         conn_s3 = aws.init_s3()
-        test = aws.check_bucket(conn_s3)
+        test_s3 = aws.check_bucket(conn_s3)
     finally:
-        assert test == 0
+        assert test_s3 == 0
