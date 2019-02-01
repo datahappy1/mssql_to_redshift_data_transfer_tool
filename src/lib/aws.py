@@ -63,7 +63,8 @@ def list_bucket(conn_s3):
     try:
         bucket_name = S3_BUCKET_NAME
         for key in conn_s3.list_objects(Bucket=bucket_name)['Contents']:
-            return key['Key']
+            keys = key['Key']
+        return keys
     except boto3.exceptions.ResourceNotExistsError:
         logging.warning('AWS S3 %s bucket is empty', bucket_name)
 
