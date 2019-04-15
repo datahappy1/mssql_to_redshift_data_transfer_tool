@@ -29,6 +29,8 @@ It consumes arguments defining:
 # How to install and run the program
 ### To install:
 `git clone https://www.github.com/datahappy1/mssql_to_redshift_data_transfer_tool mssql_to_redshift_data_transfer_tool` <br />
+`cd c:\mssql_to_redshift_data_transfer_tool` <br />
+`pip install -r requirements.txt` <br />
 <br />
 #### Securables ( hostnames, usernames, passwords etc. ) :
 Follow the instructions in notes.txt file from:<br />
