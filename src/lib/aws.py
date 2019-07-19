@@ -3,7 +3,8 @@ import logging
 import sys
 import boto3
 from boto3.s3.transfer import S3Transfer
-from boto3.exceptions import Boto3Error, S3UploadFailedError
+from boto3.exceptions import S3UploadFailedError
+from botocore.exceptions import ClientError
 import psycopg2
 from src.settings import S3_BUCKET_NAME, S3_TARGET_DIR, REDSHIFT_DB
 from src.lib.utils import decode_env_vars
@@ -26,8 +27,8 @@ def init_s3():
 
         logging.info('AWS S3 set boto3.client success')
         return conn_s3
-    except Boto3Error:
-        logging.error('AWS S3 set boto3.client failed, Boto3Error')
+    except ClientError:
+        logging.error('AWS S3 set boto3.client failed, ClientError')
         sys.exit(1)
 
 
@@ -50,6 +51,21 @@ def upload_to_s3(conn_s3, full_file_name, file_name):
         return 0
     except S3UploadFailedError:
         logging.error('AWS S3 upload failed, S3UploadFailedError')
+        sys.exit(1)
+
+
+def check_bucket(conn_s3):
+    """
+    Check if the s3 bucket set in settings.py exists and is available
+    :param conn_s3
+    :return: 0 if the bucket exists and we can access it
+    """
+    try:
+        bucket_name = S3_BUCKET_NAME
+        conn_s3.head_bucket(Bucket=bucket_name)
+        return 0
+    except ClientError:
+        logging.error('AWS S3 bucket used in settings.py not exists or not available')
         sys.exit(1)
 
 

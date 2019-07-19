@@ -29,6 +29,8 @@ It consumes arguments defining:
 # How to install and run the program
 ### To install:
 `git clone https://www.github.com/datahappy1/mssql_to_redshift_data_transfer_tool mssql_to_redshift_data_transfer_tool` <br />
+`cd c:\mssql_to_redshift_data_transfer_tool` <br />
+`pip install -r requirements.txt` <br />
 <br />
 #### Securables ( hostnames, usernames, passwords etc. ) :
 Follow the instructions in notes.txt file from:<br />
@@ -65,7 +67,18 @@ You need to set the PYTHONPATH like this:
 `export PYTHONPATH=$PYTHONPATH:/home/your_user/your_git_projects/mssql_to_redshift_data_transfer_tool/`<br />
 <br />
 A permanent solution is to:<br />
-TODO
+-Open your favorite terminal program<br />
+-Open the file ~/.bashrc in your text editor – e.g. atom ~/.bashrc<br />
+-Add the following line to the end:<br />
+`export PYTHONPATH=/home/my_user/code`<br />
+-Save the file.<br />
+
+-Close your terminal application<br />
+
+-Start your terminal application again, to read in the new settings, and type this:<br />
+`echo $PYTHONPATH`<br />
+It should show something like /home/my_user/code<br />
+<br />
 
 
 #### Pytest testing:<br />
