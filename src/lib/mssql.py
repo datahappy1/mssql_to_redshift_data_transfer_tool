@@ -69,6 +69,11 @@ def run_extract_filter_bcp(conn_mssql, database_name, schema_name, target_direct
                        + target_directory + "','"
                        + str(dry_run) + "'"
                        )
+        
+        # sql injection safe code:
+        # cursor.callproc('[mngmt].[Extract_Filter_BCP]', (database_name,schema_name,
+        #                                                  target_directory,str(dry_run),))
+        
         ret = cursor.fetchone()[0]
         return ret
     except pymssql.Error:
@@ -103,6 +108,12 @@ def write_log_row(conn_mssql, execution_step, database_name, schema_name, table_
                        + " @status='" + status + "',"
                        + " @message='" + message + "'"
                        )
+        
+        # sql injection safe code:
+        # cursor.callproc('[mngmt].[ExecutionLogs_Insert]', (execution_step, database_name,
+        #                                                    schema_name, table_name, target_directory,
+        #                                                    file_name, status, message, ))
+        
         return 0
     except pymssql.Error:
         logging.warning("Row not logged, pymssql Error")
