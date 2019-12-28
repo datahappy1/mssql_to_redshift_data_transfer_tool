@@ -16,11 +16,5 @@ def test_integrate():
                                    dry_run_str_prefix='Integration test - Dry run ')
 
     ret = mssql_to_redshift.Runner.main(obj)
-    success_found = 0
 
-    if ret == 0:
-        success_found = 1
-    else:
-        pass
-
-    assert success_found == 1
+    assert ret == 0
