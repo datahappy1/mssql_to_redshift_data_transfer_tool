@@ -1,4 +1,0 @@
-pymssql<3.0
-boto3
-psycopg2-binary==2.8.4
-pytest

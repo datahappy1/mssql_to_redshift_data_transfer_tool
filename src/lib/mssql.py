@@ -2,7 +2,7 @@
 
 import logging
 import sys
-import pymssql
+import pyodbc
 from src.settings import MS_SQL_DB
 from src.lib.utils import decode_env_vars
 
@@ -21,20 +21,20 @@ def init():
         mssql_user = decode_env_vars("mssql_user")
         mssql_pass = decode_env_vars("mssql_pass")
 
-        conn_mssql = pymssql.connect(server=mssql_host,
-                                     port=mssql_port,
-                                     user=mssql_user,
-                                     password=mssql_pass,
-                                     database=MS_SQL_DB,
-                                     autocommit=True)
+        conn_mssql = pyodbc.connect(server=mssql_host,
+                                    port=mssql_port,
+                                    user=mssql_user,
+                                    password=mssql_pass,
+                                    database=MS_SQL_DB,
+                                    autocommit=True)
 
         logging.info('SQL Server connection initiated')
         return conn_mssql
-    except pymssql.InterfaceError:
+    except pyodbc.InterfaceError:
         logging.error("SQL Server connection failed."
                       "A MSSQLDriverException has been caught.")
         sys.exit(1)
-    except pymssql.DatabaseError:
+    except pyodbc.DatabaseError:
         logging.error("SQL Server connection failed."
                       "A MSSQLDatabaseException has been caught.")
         sys.exit(1)
@@ -69,14 +69,14 @@ def run_extract_filter_bcp(conn_mssql, database_name, schema_name, target_direct
                        + target_directory + "','"
                        + str(dry_run) + "'"
                        )
-        
+
         # sql injection safe code:
         # cursor.callproc('[mngmt].[Extract_Filter_BCP]', (database_name,schema_name,
         #                                                  target_directory,str(dry_run),))
-        
+
         ret = cursor.fetchone()[0]
         return ret
-    except pymssql.Error:
+    except pyodbc.Error:
         logging.error("Stored Procedure Extract_Filter_BCP failed, pymssql Error")
         sys.exit(1)
 
@@ -108,12 +108,12 @@ def write_log_row(conn_mssql, execution_step, database_name, schema_name, table_
                        + " @status='" + status + "',"
                        + " @message='" + message + "'"
                        )
-        
+
         # sql injection safe code:
         # cursor.callproc('[mngmt].[ExecutionLogs_Insert]', (execution_step, database_name,
         #                                                    schema_name, table_name, target_directory,
         #                                                    file_name, status, message, ))
-        
+
         return 0
-    except pymssql.Error:
+    except pyodbc.Error:
         logging.warning("Row not logged, pymssql Error")

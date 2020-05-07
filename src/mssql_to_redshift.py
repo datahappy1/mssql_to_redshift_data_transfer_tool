@@ -45,6 +45,7 @@ class Runner:
     """
     Class Runner handling the functions for the program flow
     """
+
     def __init__(self, database_name, schema_name, target_directory, dry_run,
                  dry_run_str_prefix):
         self.database_name = database_name
@@ -173,7 +174,7 @@ class Runner:
         for file_name in files:
             full_file_name = file_name.strip("'")
             file_name = full_file_name.rsplit('\\', 1)[1]
-            table_name = file_name[0:(len(file_name)-24)]
+            table_name = file_name[0:(len(file_name) - 24)]
 
             if bool(dry_run):
                 logging.info('%s copy %s from s3://%s/%s/%s',

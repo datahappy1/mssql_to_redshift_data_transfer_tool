@@ -11,5 +11,5 @@ setup(
     author_email='',
     description='Python 3.7 tool to extract data out of a MSSQL database '
                 'and load it into an AWS Redshift Cluster',
-    install_requires=['boto3', 'botocore', 'psycopg2', 'pymssql']
+    install_requires=['pyodbc', 'boto3', 'botocore', 'psycopg2-binary', 'pytest']
 )

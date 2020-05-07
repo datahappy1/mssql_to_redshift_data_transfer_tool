@@ -1,8 +1,0 @@
-/src/mssql_to_redshift.py
-line ~166
-AWS Redshift tablename set as the filename without the .csv extension
-and the timestamp add settings.py value for AWS vacuum tablename command possibility
-
-/src/settings.py:
-REDSHIFT_VACUUM_TABLES = True
-https://docs.aws.amazon.com/redshift/latest/dg/r_VACUUM_command.html

@@ -11,13 +11,11 @@ It consumes arguments defining:
 - dryrun (True | False,this argument let's you run a dryrun for testing of the redshift copy commands)
 
 
-[How this tool works](#how-this-tool-works)
+#### [How this tool works](#how-this-tool-works)
 
-[How to install and run the program](#how-to-install-and-run-the-program)
+#### [How to install and run the program](#how-to-install-and-run-the-program)
 
-[How to setup a new MSSQL to Redshift data migration project](#How-to-setup-a-new-MSSQL-to-Redshift-data-migration-project)
-
-[Important notes](#important-notes)
+#### [How to setup a new MSSQL to Redshift data migration project](#How-to-setup-a-new-MSSQL-to-Redshift-data-migration-project)
 
 
 # How this tool works
@@ -31,6 +29,7 @@ It consumes arguments defining:
 - `git clone https://www.github.com/datahappy1/mssql_to_redshift_data_transfer_tool mssql_to_redshift_data_transfer_tool` <br />
 - `cd c:\mssql_to_redshift_data_transfer_tool` <br />
 - ! create and activate a virtual environment<br />
+- download Windows Postgres Driver https://www.enterprisedb.com/thank-you-downloading-postgresql?cid=48
 - `pip3 install -r requirements.txt` <br />
 <br />
 #### Securables ( hostnames, usernames, passwords etc. ) :
@@ -113,8 +112,3 @@ Run this command to execute:<br />
 -Run Pytest to make sure everything's working correctly <br />
 -Try running this tool with the Dryrun argument set to true <br />
 -If the AWS Redshift commands are correct, re-run with the Dryrun argument set to false <br />
-
-
-# Important Notes
-- Feel free to contribute to this project
-- In the future, I'd like to make this tool run also on watermarks, so you transfer to Redshift only the data increments
