@@ -63,56 +63,47 @@ class Runner:
         ###########################################################################################
         """ 1: preparations and creating a working folder for the .csv files """
         ###########################################################################################
-        target_directory = self.target_directory
         try:
-            if not os.path.exists(target_directory):
-                os.makedirs(target_directory)
-                logging.info('%s folder created', target_directory)
+            if not os.path.exists(self.target_directory):
+                os.makedirs(self.target_directory)
+                logging.info('%s folder created', self.target_directory)
             else:
-                logging.info('%s folder already exists', target_directory)
+                logging.info('%s folder already exists', self.target_directory)
         except OSError:
-            logging.error('Could not create the %s folder, OSError', target_directory)
+            logging.error('Could not create the %s folder, OSError', self.target_directory)
             sys.exit(1)
 
-    def ms_sql(self):
+    def run_ms_sql_phase(self):
         ###########################################################################################
         """ 2: execute the [mngmt].[Extract_Filter_BCP] MS SQL Stored Procedure with pymssql """
         ###########################################################################################
-        database_name = self.database_name
-        schema_name = self.schema_name
-        target_directory = self.target_directory
-        dry_run = self.dry_run
-        dry_run_str_prefix = self.dry_run_str_prefix
-
         self.conn_mssql = mssql.init()
 
         logging.info('%s Generating .csv files using bcp in a stored procedure starting',
-                     dry_run_str_prefix)
+                     self.dry_run_str_prefix)
 
-        ret = mssql.run_extract_filter_bcp(self.conn_mssql, database_name, schema_name,
-                                           target_directory, dry_run)
-        self.ret = ret
+        self.ret = mssql.run_extract_filter_bcp(self.conn_mssql, self.database_name, self.schema_name,
+                                                self.target_directory, self.dry_run)
 
-        if "MS SQL error, details:" in ret:
+        if "MS SQL error, details:" in self.ret:
             logging.error('SQL code error in the stored procedure')
-            logging.error('%s', ret)
+            logging.error('%s', self.ret)
             sys.exit(1)
-        elif "No .csv files generated" in ret:
-            logging.error('%s No .csv files generated', dry_run_str_prefix)
+        elif "No .csv files generated" in self.ret:
+            logging.error('%s No .csv files generated', self.dry_run_str_prefix)
             sys.exit(1)
         else:
             logging.info('%s Generating .csv files using bcp in a stored procedure '
-                         'finished', dry_run_str_prefix)
+                         'finished', self.dry_run_str_prefix)
 
-    def file_size(self):
+    def check_file_size(self):
         ###########################################################################################
         """ 3: check the .csv file size """
         ###########################################################################################
 
-        files = utils.str_split(self.ret)
-        self.files = files
+        self.files = utils.str_split(self.ret)
 
-        for file_name in files:
+        for file_name in self.files:
             file_name = file_name.strip("'")
             file_size = os.path.getsize(file_name)
             # check that the file size in MB is not greater than settings.CSV_MAX_FILE_SIZE
@@ -126,70 +117,59 @@ class Runner:
         logging.info('All files passed the max file size check, value %s declared in settings.py',
                      settings.CSV_MAX_FILE_SIZE)
 
-    def aws_s3(self):
+    def run_aws_s3_phase(self):
         ###########################################################################################
         """ 4: upload csv files to S3 """
         ###########################################################################################
-        dry_run_str_prefix = self.dry_run_str_prefix
-        dry_run = self.dry_run
-        files = self.files
-        database_name = self.database_name
-        schema_name = self.schema_name
 
         self.conn_s3 = aws.init_s3()
 
         logging.info('%s Upload of the .csv files to the S3 bucket location %s / %s starting',
-                     dry_run_str_prefix, settings.S3_BUCKET_NAME, settings.S3_TARGET_DIR)
+                     self.dry_run_str_prefix, settings.S3_BUCKET_NAME, settings.S3_TARGET_DIR)
 
-        for file_name in files:
+        for file_name in self.files:
             full_file_name = file_name.strip("'")
             file_name = full_file_name.rsplit('\\', 1)[1]
 
-            if bool(dry_run):
-                logging.info('%s S3 copy %s', dry_run_str_prefix, file_name)
+            if bool(self.dry_run):
+                logging.info('%s S3 copy %s', self.dry_run_str_prefix, file_name)
             else:
                 aws.upload_to_s3(self.conn_s3, full_file_name, file_name)
-                mssql.write_log_row(self.conn_mssql, 'S3 UPLOAD', database_name, schema_name,
+                mssql.write_log_row(self.conn_mssql, 'S3 UPLOAD', self.database_name, self.schema_name,
                                     '#N/A', settings.S3_BUCKET_NAME + '/' + settings.S3_TARGET_DIR,
                                     file_name, 'S', 'file ' + file_name + ' copied to S3 bucket')
 
         logging.info('%s Upload of the .csv files to the S3 bucket location %s / %s finished',
-                     dry_run_str_prefix, settings.S3_BUCKET_NAME, settings.S3_TARGET_DIR)
+                     self.dry_run_str_prefix, settings.S3_BUCKET_NAME, settings.S3_TARGET_DIR)
 
-    def aws_redshift(self):
+    def run_aws_redshift_phase(self):
         ###########################################################################################
         """ 5: run Redshift COPY commands """
         ###########################################################################################
-        dry_run_str_prefix = self.dry_run_str_prefix
-        files = self.files
-        dry_run = self.dry_run
-        database_name = self.database_name
-        schema_name = self.schema_name
-
         self.conn_redshift = aws.init_redshift()
 
         logging.info('%s Copy of the .csv files to the AWS Redshift cluster starting',
-                     dry_run_str_prefix)
+                     self.dry_run_str_prefix)
 
-        for file_name in files:
+        for file_name in self.files:
             full_file_name = file_name.strip("'")
             file_name = full_file_name.rsplit('\\', 1)[1]
             table_name = file_name[0:(len(file_name) - 24)]
 
-            if bool(dry_run):
+            if bool(self.dry_run):
                 logging.info('%s copy %s from s3://%s/%s/%s',
-                             dry_run_str_prefix, table_name, settings.S3_BUCKET_NAME,
+                             self.dry_run_str_prefix, table_name, settings.S3_BUCKET_NAME,
                              settings.S3_TARGET_DIR, file_name)
             else:
                 aws.copy_to_redshift(self.conn_redshift, table_name, file_name)
-                mssql.write_log_row(self.conn_mssql, 'RS UPLOAD', database_name, schema_name,
+                mssql.write_log_row(self.conn_mssql, 'RS UPLOAD', self.database_name, self.schema_name,
                                     table_name, settings.S3_BUCKET_NAME + '/' +
                                     settings.S3_TARGET_DIR, file_name, 'S', 'file ' + file_name +
                                     ' copied to a Redshift table ' + table_name +
                                     ' from the S3 bucket')
 
         logging.info('%s Copy of the .csv files to the AWS Redshift cluster finished',
-                     dry_run_str_prefix)
+                     self.dry_run_str_prefix)
 
     def close_conn(self):
         ###########################################################################################
@@ -207,10 +187,10 @@ class Runner:
         logging.getLogger("botocore").setLevel(logging.WARNING)
 
         Runner.prepare_dir(self)
-        Runner.ms_sql(self)
-        Runner.file_size(self)
-        Runner.aws_s3(self)
-        Runner.aws_redshift(self)
+        Runner.run_ms_sql_phase(self)
+        Runner.check_file_size(self)
+        Runner.run_aws_s3_phase(self)
+        Runner.run_aws_redshift_phase(self)
         Runner.close_conn(self)
 
         logging.info('Program ran successfully!')
