@@ -1,6 +1,5 @@
 """ connectivity test """
-from src.lib import mssql
-from src.lib import aws
+from src.lib import mssql, aws
 
 
 # assuming we can initiate and query a connection cursor to MSSQL

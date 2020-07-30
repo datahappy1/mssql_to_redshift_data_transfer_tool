@@ -199,7 +199,7 @@ class Runner:
         mssql.close(self.conn_mssql)
         aws.close_redshift(self.conn_redshift)
 
-    def main(self):
+    def run(self):
         """
         7: orchestrate project flow
         :return:
@@ -220,4 +220,4 @@ class Runner:
 if __name__ == "__main__":
     PREPARED_ARGS = prepare_args()
     RUNNER_OBJ = Runner(**PREPARED_ARGS)
-    Runner.main(RUNNER_OBJ)
+    Runner.run(RUNNER_OBJ)

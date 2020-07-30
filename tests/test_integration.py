@@ -12,9 +12,8 @@ def test_integrate():
     """
     target_dir = os.getcwd().rstrip('tests') + 'files'
     obj = mssql_to_redshift.Runner(database_name='MSSQL_to_Redshift', schema_name='mngmt',
-                                   target_directory=target_dir, dry_run=1,
-                                   dry_run_str_prefix='Integration test - Dry run ')
+                                   target_directory=target_dir, dry_run=1)
 
-    ret = mssql_to_redshift.Runner.main(obj)
+    ret = mssql_to_redshift.Runner.run(obj)
 
     assert ret == 0
