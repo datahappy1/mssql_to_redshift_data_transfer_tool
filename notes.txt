@@ -1,0 +1,12 @@
+install on Linux:
+sudo apt install unixodbc-dev
+sudo pipenv install
+
+install SQLSERVER express in Docker
+sudo docker pull mcr.microsoft.com/mssql/server
+
+sudo docker image ls
+
+sudo docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=yourStrong(!)Password' -e 'MSSQL_PID=Express' -p 1433:1433 -d mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+sudo docker container ls
+sudo docker container kill 22a22f7350

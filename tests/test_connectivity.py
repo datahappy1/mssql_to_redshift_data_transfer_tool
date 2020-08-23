@@ -1,5 +1,5 @@
 """ connectivity test """
-from src.lib import mssql, aws
+from mssql_to_redshift_data_transfer_tool.lib import mssql, aws
 
 
 # assuming we can initiate and query a connection cursor to MSSQL

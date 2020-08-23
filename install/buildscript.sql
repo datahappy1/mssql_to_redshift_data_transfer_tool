@@ -10,20 +10,6 @@ GO
 CREATE SCHEMA mngmt;
 GO
 
-CREATE TABLE mngmt.ExecutionLogs (
-	[Log_ID] INT PRIMARY KEY IDENTITY(1,1),
-	[ExecutionDT] DATETIME, 
-	[ExecutionStep] VARCHAR(10),
-	[DatabaseName] VARCHAR(128),
-	[SchemaName] VARCHAR(128),
-	[TableName] VARCHAR(128),
-	[TargetDirectory] VARCHAR(255),
-	[Filename] VARCHAR(300), 
-	[Status] CHAR(1),
-	[Message] VARCHAR(MAX)
-) 
-GO
-
 CREATE TABLE mngmt.ControlTable (	
 	ControlTable_ID INT PRIMARY KEY IDENTITY(1,1),
 	DatabaseName VARCHAR(128),
@@ -54,7 +40,9 @@ INSERT INTO mngmt.Integration_test_table(test_column_1, test_column_2)
 
 --For DEMO purposes, let's fill the control table for the transfer with the AdventureWorks DataWarehouse tables 
 --and set all columns as IsActive
-USE AdventureWorksDW2016;
+-- USE AdventureWorksDW2016;
+-- GO
+USE master;
 GO
 
 INSERT INTO MSSQL_to_Redshift.mngmt.ControlTable ( DatabaseName, SchemaName, TableName, ColumnName, Column_id, IsActive )
@@ -72,55 +60,6 @@ ORDER BY t.object_id;
 
 
 USE MSSQL_to_Redshift;
-GO
-
-CREATE PROCEDURE mngmt.ExecutionLogs_Insert (
-@ExecutionStep VARCHAR(10), 
-@DatabaseName VARCHAR(128), 
-@SchemaName VARCHAR(128), 
-@TableName VARCHAR(128), 
-@TargetDirectory VARCHAR(255), 
-@Filename VARCHAR(300), 
-@Status CHAR(1), 
-@Message VARCHAR(MAX)
-)
-AS
-BEGIN TRY
-	INSERT INTO mngmt.ExecutionLogs (
-		ExecutionDT, 
-		ExecutionStep, 
-		DatabaseName, 
-		SchemaName, 
-		TableName, 
-		TargetDirectory, 
-		[Filename], 
-		[Status], 
-		[Message]
-		)
-	SELECT 	
-		GETDATE(), 
-		@ExecutionStep, 
-		@DatabaseName, 
-		@SchemaName, 
-		@TableName, 
-		@TargetDirectory, 
-		@Filename, 
-		@Status, 
-		@Message
-END TRY
-
-BEGIN CATCH
-	SELECT 
-		'Row not logged, MSSQL error, details:'
-		+ '  Error_Number' + CAST(ERROR_NUMBER() AS VARCHAR(9))
-		+ '; Error_Severity:' + CAST(ERROR_SEVERITY() AS VARCHAR(9))
-		+ '; Error_State:' + CAST(ERROR_STATE() AS VARCHAR(9))
-		+ '; Error_Procedure:' + ERROR_PROCEDURE() 
-		+ '; Error_Line:' + CAST(ERROR_LINE() AS VARCHAR(9))
-		+ '; Error_Message:' + ERROR_MESSAGE()
-		AS Result;
-END CATCH
-
 GO
 
 CREATE PROCEDURE mngmt.Extract_Filter_BCP (	
@@ -219,8 +158,6 @@ BEGIN TRY
         BEGIN
             SET @Message = 'Dryrun ' + @Message
         END
-
-        EXEC mngmt.ExecutionLogs_Insert 'MSSQL-BCP', @DatabaseName, @SchemaName, @TableName, @TargetDirectory, @FileName, @Status, @Message
 
 		DELETE FROM #tmp WHERE RN = @ID;
 	END
