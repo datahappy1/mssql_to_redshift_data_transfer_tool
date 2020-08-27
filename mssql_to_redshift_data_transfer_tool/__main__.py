@@ -4,8 +4,8 @@ import argparse
 import logging
 
 from mssql_to_redshift_data_transfer_tool.exceptions import MsSqlToRedshiftBaseException
-from mssql_to_redshift_data_transfer_tool import settings
-from mssql_to_redshift_data_transfer_tool.lib import mssql, aws, utils
+from mssql_to_redshift_data_transfer_tool.settings import CSV_MAX_FILE_SIZE, S3_BUCKET_NAME, S3_TARGET_DIR
+from mssql_to_redshift_data_transfer_tool.lib import mssql, aws
 
 
 def setup_logger(dry_run=None):
@@ -28,17 +28,18 @@ class Runner:
     Class Runner handling the functions for the program flow
     """
 
+    @staticmethod
+    def _str_splitter(input_string):
+        output_split_string = str(input_string).strip('()').split(',')
+        return output_split_string
+
     def __init__(self, database_name, schema_name, generated_csv_files_target_directory, dry_run):
         self.database_name = database_name
         self.schema_name = schema_name
-        self.logger = setup_logger(dry_run=dry_run)
-        self.dry_run = dry_run
+        self.is_dry_run = dry_run
+        self.logger = setup_logger(dry_run=self.is_dry_run)
         self.generated_csv_files_target_directory = generated_csv_files_target_directory
         self.generated_csv_file_names = None
-
-    @property
-    def is_dry_run(self):
-        return True if self.dry_run else False
 
     def prepare_dir(self):
         """
@@ -64,13 +65,13 @@ class Runner:
 
         conn_mssql = mssql.init()
 
-        self.logger.info('Generating .csv files using bcp in a stored procedure started')
+        self.logger.info('Generating .csv files using BCP in a stored procedure started')
 
         mssql_sp_return_value = mssql.run_extract_filter_bcp(conn_mssql,
                                                              self.database_name,
                                                              self.schema_name,
                                                              self.generated_csv_files_target_directory,
-                                                             self.dry_run)
+                                                             self.is_dry_run)
 
         if "MS SQL error, details:" in mssql_sp_return_value:
             self.logger.error('SQL code error in the stored procedure %s', mssql_sp_return_value)
@@ -93,19 +94,18 @@ class Runner:
         :return:
         """
 
-        self.generated_csv_file_names = utils.str_splitter(mssql_sp_return_value)
+        self.generated_csv_file_names = Runner._str_splitter(mssql_sp_return_value)
 
         for file_name in self.generated_csv_file_names:
             file_name = file_name.strip("'")
             file_size = os.path.getsize(file_name)
-            # check that the file size in MB is not greater than settings.CSV_MAX_FILE_SIZE
-            if file_size / 1048576 > settings.CSV_MAX_FILE_SIZE:
+            if file_size / 1048576 > CSV_MAX_FILE_SIZE:
                 self.logger.error('The file %s has file size %s MB and that is larger than '
                                   'CSV_MAX_FILE_SIZE set in settings.py', file_name, str(file_size))
                 raise MsSqlToRedshiftBaseException
 
         self.logger.info('All files passed the max file size check, value %s declared in settings.py',
-                         settings.CSV_MAX_FILE_SIZE)
+                         CSV_MAX_FILE_SIZE)
 
     def run_aws_s3_phase(self):
         """
@@ -116,7 +116,7 @@ class Runner:
         conn_s3 = aws.init_s3()
 
         self.logger.info('Upload of the .csv files to the S3 bucket location %s / %s starting',
-                         settings.S3_BUCKET_NAME, settings.S3_TARGET_DIR)
+                         S3_BUCKET_NAME, S3_TARGET_DIR)
 
         for file_name in self.generated_csv_file_names:
             full_file_name = file_name.strip("'")
@@ -129,7 +129,7 @@ class Runner:
                 logging.info('S3 UPLOAD of %s to S3 bucket passed', file_name)
 
         self.logger.info('%s Upload of the .csv files to the S3 bucket location %s / %s finished',
-                         settings.S3_BUCKET_NAME, settings.S3_TARGET_DIR)
+                         S3_BUCKET_NAME, S3_TARGET_DIR)
 
     def run_aws_redshift_phase(self):
         """
@@ -148,8 +148,8 @@ class Runner:
 
             if self.is_dry_run:
                 self.logger.info('%s copy %s from s3://%s/%s/%s',
-                                 table_name, settings.S3_BUCKET_NAME,
-                                 settings.S3_TARGET_DIR, file_name)
+                                 table_name, S3_BUCKET_NAME,
+                                 S3_TARGET_DIR, file_name)
             else:
                 aws.copy_to_redshift(conn_redshift, table_name, file_name)
 

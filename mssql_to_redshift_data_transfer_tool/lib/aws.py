@@ -1,4 +1,5 @@
 """ AWS Library """
+import os
 import logging
 import boto3
 import psycopg2
@@ -9,7 +10,6 @@ from botocore.exceptions import ClientError
 
 from mssql_to_redshift_data_transfer_tool.exceptions import MsSqlToRedshiftBaseException
 from mssql_to_redshift_data_transfer_tool.settings import S3_BUCKET_NAME, S3_TARGET_DIR, REDSHIFT_DB
-from mssql_to_redshift_data_transfer_tool.lib.utils import get_env_var_value
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -19,8 +19,8 @@ def init_s3():
     Initiate AWS S3 bucket
     :return: conn_s3 on success, sys.exit on error
     """
-    aws_access_key_id = get_env_var_value("aws_access_key_id")
-    aws_secret_access_key = get_env_var_value("aws_secret_access_key")
+    aws_access_key_id = os.getenv("aws_access_key_id")
+    aws_secret_access_key = os.getenv("aws_secret_access_key")
 
     try:
         conn_s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
@@ -71,10 +71,10 @@ def init_redshift():
     Initiate AWS Redshift
     :return: conn_redshift on success, sys.exit on error
     """
-    redshift_host = get_env_var_value("redshift_host")
-    redshift_port = get_env_var_value("redshift_port")
-    redshift_user = get_env_var_value("redshift_user")
-    redshift_pass = get_env_var_value("redshift_pass")
+    redshift_host = os.getenv("redshift_host")
+    redshift_port = os.getenv("redshift_port")
+    redshift_user = os.getenv("redshift_user")
+    redshift_pass = os.getenv("redshift_pass")
 
     try:
         redshift_database = REDSHIFT_DB
@@ -109,8 +109,8 @@ def copy_to_redshift(conn_redshift, table_name, file_name):
     :param file_name:
     :return: 0 on success, sys.exit on error
     """
-    aws_access_key_id = get_env_var_value("aws_access_key_id")
-    aws_secret_access_key = get_env_var_value("aws_secret_access_key")
+    aws_access_key_id = os.getenv("aws_access_key_id")
+    aws_secret_access_key = os.getenv("aws_secret_access_key")
 
     try:
         cur = conn_redshift.cursor()
