@@ -36,7 +36,8 @@ class Aws:
         self.redshift_conn = _connect_to_redshift()
 
     def __repr__(self):
-        return self.redshift_conn
+        return {"redshift_conn": self.redshift_conn,
+                "s3_client": self.s3_client}
 
     def upload_to_s3(self, dry_run, full_file_name, file_name):
         if dry_run is True:

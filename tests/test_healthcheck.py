@@ -23,7 +23,7 @@ def test_connect_redshift():
     AWS Redshift test connectivity function
     :return:
     """
-    redshift_conn = Aws().__repr__()
+    redshift_conn = Aws().__repr__()['redshift_conn']
     cursor = redshift_conn.cursor()
     cursor.execute("SELECT 0")
     actual_result = str(cursor.fetchone())
