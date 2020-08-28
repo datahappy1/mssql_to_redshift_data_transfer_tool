@@ -1,2 +1,7 @@
-1) Setup your AWS IAM user with policies allowing you to access your S3 bucket
- and your Redshift cluster, use the keys as described in the securables part of the installation
+1) create new redshift cluster
+redshift console -> properties -> publicly accessible = Yes
+vpc security group -> new inbound rule -> redshift traffic -> add my ip address
+create s3 -> open for connections from outside
+https://docs.aws.amazon.com/redshift/latest/dg/r_COPY.html
+need to have tables created
+https://docs.aws.amazon.com/redshift/latest/dg/r_CREATE_TABLE_NEW.html
