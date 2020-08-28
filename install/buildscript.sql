@@ -63,123 +63,107 @@ ORDER BY t.object_id;
 USE MSSQL_to_Redshift;
 GO
 
-CREATE PROCEDURE mngmt.Extract_Filter_BCP(@DatabaseName VARCHAR(128),
-                                          @SchemaName VARCHAR(128),
-                                          @TargetDirectory VARCHAR(255),
-                                          @DryRun BIT,
-                                          @Result VARCHAR(MAX) = '' OUTPUT)
+CREATE PROCEDURE mngmt.Extract_Filter_BCP(
+    @DatabaseName VARCHAR(128),
+    @SchemaName VARCHAR(128),
+    @TargetDirectory VARCHAR(255),
+    @DryRun BIT
+)
 AS
 
-    SET NOCOUNT ON;
+SET NOCOUNT ON;
 
 BEGIN TRY
-    ---------------------
-    --Declarations:
-    ---------------------
-    DECLARE @ID SMALLINT;
-    DECLARE @TableName VARCHAR(128);
-    DECLARE @ColumnNamesSerialized VARCHAR(MAX);
-    DECLARE @BCPCommand VARCHAR(4000);
-    DECLARE @Message VARCHAR(MAX);
-    DECLARE @DTNow CHAR(19) = FORMAT(GetDate(), 'yyyy_MM_dd_HH_mm_ss')
-    DECLARE @Status CHAR(1);
-    DECLARE @FileName VARCHAR(300);
-    DECLARE @DryRunQuery VARCHAR(10) = '';
+	---------------------
+	--Declarations:
+	---------------------
+	DECLARE @ID SMALLINT;
+	DECLARE @TableName VARCHAR(128);
+	DECLARE @ColumnNamesSerialized VARCHAR(MAX);
+	DECLARE @BCPCommand VARCHAR(4000);
+	DECLARE @DTNow CHAR(19) = FORMAT(GetDate(), 'yyyy_MM_dd_HH_mm_ss')
+	DECLARE @FileName VARCHAR(300);
+	DECLARE @DryRunQuery VARCHAR(10) = '';
 
-    ---------------------
-    --Execution:
-    ---------------------
-    SELECT i.*
-    INTO #tmp
-    FROM (
-             SELECT ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RN,
-                    DatabaseName,
-                    SchemaName,
-                    TableName,
-                    STUFF(
-                            (SELECT ', ' + Columnname
-                             FROM mngmt.ControlTable i
-                             WHERE i.DatabaseName = o.DatabaseName
-                               AND i.SchemaName = o.SchemaName
-                               AND i.TableName = o.TableName
-                               AND IsActive = 1
-                             ORDER BY i.Column_id
-                             FOR XML PATH ('')), 1, 1, ''
-                        )                                      AS ColumnNamesSerialized
-             FROM mngmt.ControlTable o
-             WHERE DatabaseName = @DatabaseName
-               AND SchemaName = @SchemaName
-             GROUP BY DatabaseName, SchemaName, TableName
-         ) i
-    WHERE i.ColumnNamesSerialized IS NOT NULL;
+	---------------------
+	--Execution:
+	---------------------
+	SELECT i.*
+	INTO #tmp
+	FROM (
+		SELECT	ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RN,
+				DatabaseName,
+				SchemaName,
+				TableName,
+				STUFF(
+						(	SELECT ', ' + Columnname
+							FROM mngmt.ControlTable i
+							WHERE	i.DatabaseName = o.DatabaseName
+								AND i.SchemaName = o.SchemaName
+								AND i.TableName = o.TableName
+								AND IsActive = 1
+							ORDER BY i.Column_id
+							FOR XML PATH ('')), 1, 1, ''
+					) AS ColumnNamesSerialized
+		FROM mngmt.ControlTable o
+		WHERE	DatabaseName = @DatabaseName
+			AND SchemaName = @SchemaName
+		GROUP BY DatabaseName,SchemaName,TableName
+	) i
+	WHERE i.ColumnNamesSerialized IS NOT NULL;
 
-    WHILE EXISTS(SELECT * FROM #tmp)
-        BEGIN
+	WHILE EXISTS (SELECT * FROM #tmp)
+	BEGIN
 
-            SELECT TOP (1) @ID = RN,
-                           @DatabaseName = DatabaseName,
-                           @SchemaName = Schemaname,
-                           @TableName = TableName,
-                           @ColumnNamesSerialized = ColumnNamesSerialized
-            FROM #tmp
-            ORDER BY RN;
+		SELECT TOP(1)
+		@ID = RN,
+		@DatabaseName = DatabaseName,
+		@SchemaName = Schemaname,
+		@TableName = TableName,
+		@ColumnNamesSerialized = ColumnNamesSerialized
+		FROM #tmp
+		ORDER BY RN;
 
-            SET @FileName = @TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv';
+		SET @FileName = @TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv';
 
-            IF @DryRun = 1
-                BEGIN
-                    SET @DryRunQuery = ' WHERE 1=0'
-                END
+		IF @DryRun = 1
+		BEGIN
+			SET @DryRunQuery = ' WHERE 1=0'
+		END
 
-            SELECT @BCPCommand =
-                   'BCP "SELECT ' + @ColumnNamesSerialized + ' FROM ' + @DatabaseName + '.' + @SchemaName + '.' +
-                   @TableName + @DryRunQuery + ' " queryout ' + @FileName + ' -c -t, -T -S' + @@servername;
+		SELECT @BCPCommand =
+		'BCP "SELECT ' + @ColumnNamesSerialized + ' FROM ' + @DatabaseName + '.' + @SchemaName + '.' +
+		 @TableName + @DryRunQuery + ' " queryout ' + @FileName + ' -c -t, -T -S' + @@servername;
 
-            DECLARE @BCPOutput TABLE
-                               (
-                                   id      INT IDENTITY,
-                                   command NVARCHAR(256)
-                               )
+		DECLARE @BCPOutput TABLE (id INT IDENTITY, command NVARCHAR(256))
 
-            INSERT INTO @BCPOutput
-                EXEC master..xp_cmdshell @BCPCommand
+		INSERT INTO @BCPOutput
+			EXEC master..xp_cmdshell @BCPCommand
 
-            SET @Message = (SELECT command FROM @BCPOutput WHERE id = (SELECT MAX(id) - 3 FROM @BCPOutput));
+		DECLARE @Output TABLE (filepath NVARCHAR(256))
 
-            SET @Status = CASE
-                              WHEN @Message LIKE '% rows copied.'
-                                  THEN 'S'
-                              ELSE 'F'
-                END;
+		INSERT INTO @Output
+			SELECT @TargetDirectory + '\' + @TableName + '_' + @DTNow + '.csv'
 
-            SET @Result = @Result + '''' + @TargetDirectory + '\' + @TableName + '_' + @DTNow
-                + CASE
-                      WHEN @ID = (SELECT MAX(RN) FROM #tmp)
-                          THEN '.csv'''
-                      ELSE '.csv'','
-                              END
+		DELETE FROM #tmp WHERE RN = @ID;
 
-            IF @DryRun = 1
-                BEGIN
-                    SET @Message = 'Dryrun ' + @Message
-                END
+	END
 
-            DELETE FROM #tmp WHERE RN = @ID;
-        END
-
-    SELECT '(' + ISNULL(@Result, 'No .csv files generated') + ')' AS Result
+	SELECT * FROM @Output;
 
 END TRY
+
 BEGIN CATCH
 
-    SELECT 'MSSQL error, details:'
-               + '  Error_Number' + CAST(ERROR_NUMBER() AS VARCHAR(9))
-               + '; Error_Severity:' + CAST(ERROR_SEVERITY() AS VARCHAR(9))
-               + '; Error_State:' + CAST(ERROR_STATE() AS VARCHAR(9))
-               + '; Error_Procedure:' + ERROR_PROCEDURE()
-               + '; Error_Line:' + CAST(ERROR_LINE() AS VARCHAR(9))
-               + '; Error_Message:' + ERROR_MESSAGE()
-               AS Result;
+	SELECT
+			'MSSQL error, details:'
+		+ '  Error_Number' + CAST(ERROR_NUMBER() AS VARCHAR(9))
+		+ '; Error_Severity:' + CAST(ERROR_SEVERITY() AS VARCHAR(9))
+		+ '; Error_State:' + CAST(ERROR_STATE() AS VARCHAR(9))
+		+ '; Error_Procedure:' + ERROR_PROCEDURE()
+		+ '; Error_Line:' + CAST(ERROR_LINE() AS VARCHAR(9))
+		+ '; Error_Message:' + ERROR_MESSAGE()
+		AS Result;
 
 END CATCH
 

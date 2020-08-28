@@ -3,19 +3,22 @@ MSSQL to AWS Redshift data transfer tool written in Python 3.7
 
 ![](https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/blob/master/docs/img/rating.svg)
 
+- #### [Introduction](#introduction)
+
+- #### [How this tool works](#how-this-tool-works)
+
+- #### [How to install and run the program](#how-to-install-and-run-the-program)
+
+- #### [How to setup a new MSSQL to Redshift data migration project](#how-to-setup-a-new-MSSQL-to-Redshift-data-migration-project)
+
+
+# Introduction
 This tool is able to migrate data from your MSSQL Database to AWS Redshift.
 It consumes arguments defining: 
 - databasename (the name of the database with the tables in MSSQL you wish to migrate over, this argument needs to be aligned with the values in the column DatabaseName inside the configuration table MSSQL_to_Redshift.mngmt.ControlTable )
 - schemaname (the name of the database schema with the tables in MSSQL you wish to migrate over, this argument needs to be aligned with the values in the column SchemaName inside the configuration table MSSQL_to_Redshift.mngmt.ControlTable )
 - targetdirectory (the local folder where you wish to store your .csv files, if the folder not exists, it will be created for you during the runtime)
 - dryrun (True | False,this argument let's you run a dryrun for testing of the redshift copy commands)
-
-
-#### [How this tool works](#how-this-tool-works)
-
-#### [How to install and run the program](#how-to-install-and-run-the-program)
-
-#### [How to setup a new MSSQL to Redshift data migration project](#How-to-setup-a-new-MSSQL-to-Redshift-data-migration-project)
 
 
 # How this tool works

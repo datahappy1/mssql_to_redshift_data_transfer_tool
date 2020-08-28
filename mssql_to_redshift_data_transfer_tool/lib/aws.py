@@ -1,8 +1,7 @@
-""" AWS Library """
-import os
-import logging
+""" AWS module """
 import boto3
 import psycopg2
+from os import getenv
 
 from boto3.s3.transfer import S3Transfer
 from boto3.exceptions import S3UploadFailedError
@@ -11,119 +10,58 @@ from botocore.exceptions import ClientError
 from mssql_to_redshift_data_transfer_tool.exceptions import MsSqlToRedshiftBaseException
 from mssql_to_redshift_data_transfer_tool.settings import S3_BUCKET_NAME, S3_TARGET_DIR, REDSHIFT_DB
 
-logging.getLogger().setLevel(logging.INFO)
 
-
-def init_s3():
-    """
-    Initiate AWS S3 bucket
-    :return: conn_s3 on success, sys.exit on error
-    """
-    aws_access_key_id = os.getenv("aws_access_key_id")
-    aws_secret_access_key = os.getenv("aws_secret_access_key")
-
+def _init_s3_client(aws_access_key_id, aws_secret_access_key):
     try:
-        conn_s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
-                               aws_secret_access_key=aws_secret_access_key)
-
-        logging.info('AWS S3 set boto3.client success')
-        return conn_s3
+        return boto3.client('s3', aws_access_key_id=aws_access_key_id,
+                            aws_secret_access_key=aws_secret_access_key)
     except ClientError:
-        logging.error('AWS S3 set boto3.client failed, ClientError')
         raise MsSqlToRedshiftBaseException(ClientError)
 
 
-def upload_to_s3(conn_s3, full_file_name, file_name):
-    """
-    Upload to S3
-    :param conn_s3
-    :param full_file_name:
-    :param file_name:
-    :return: 0 on success, sys.exit on error
-    """
+def _connect_to_redshift():
     try:
-        transfer = S3Transfer(conn_s3)
-        transfer.upload_file(full_file_name, S3_BUCKET_NAME, S3_TARGET_DIR + "/" + file_name)
-        logging.info('%s file uploaded successfully, target bucket: %s, target folder: %s',
-                     file_name, S3_BUCKET_NAME, S3_TARGET_DIR)
-        return 0
-    except S3UploadFailedError:
-        logging.error('AWS S3 upload failed, S3UploadFailedError')
-        raise MsSqlToRedshiftBaseException(S3UploadFailedError)
-
-
-def check_bucket(conn_s3):
-    """
-    Check if the s3 bucket set in settings.py exists and is available
-    :param conn_s3
-    :return: 0 if the bucket exists and we can access it
-    """
-    try:
-        conn_s3.head_bucket(Bucket=S3_BUCKET_NAME)
-        return 0
-    except ClientError:
-        logging.error('AWS S3 bucket used in settings.py not exists or not available')
-        raise MsSqlToRedshiftBaseException(ClientError)
-
-
-def init_redshift():
-    """
-    Initiate AWS Redshift
-    :return: conn_redshift on success, sys.exit on error
-    """
-    redshift_host = os.getenv("redshift_host")
-    redshift_port = os.getenv("redshift_port")
-    redshift_user = os.getenv("redshift_user")
-    redshift_pass = os.getenv("redshift_pass")
-
-    try:
-        redshift_database = REDSHIFT_DB
-
-        conn_redshift = psycopg2.connect(dbname=redshift_database, host=redshift_host,
-                                         port=redshift_port, user=redshift_user,
-                                         password=redshift_pass)
-
-        logging.info('AWS Redshift connection initiated')
-        return conn_redshift
+        return psycopg2.connect(dbname=REDSHIFT_DB, host=getenv("redshift_host"),
+                                port=getenv("redshift_port"), user=getenv("redshift_user"),
+                                password=getenv("redshift_pass"))
     except psycopg2.Error as pse:
-        logging.error(f'AWS Redshift connection failed, {pse}')
         raise MsSqlToRedshiftBaseException(pse)
 
 
-def close_redshift(conn_redshift):
-    """
-    Close AWS Redshift connection
-    :param conn_redshift
-    :return: 0 on success
-    """
-    conn_redshift.close()
-    logging.info('AWS Redshift connection closed')
-    return 0
+class Aws:
+    def __init__(self):
+        self.aws_access_key_id = getenv('aws_access_key_id')
+        self.aws_secret_access_key = getenv('aws_secret_access_key')
+        self.s3_client = _init_s3_client(self.aws_secret_access_key, self.aws_secret_access_key)
+        self.redshift_conn = _connect_to_redshift()
 
+    def upload_to_s3(self, full_file_name, file_name):
+        try:
+            transfer = S3Transfer(self.s3_client)
+            transfer.upload_file(full_file_name, S3_BUCKET_NAME, S3_TARGET_DIR + "/" + file_name)
+        except S3UploadFailedError:
+            raise MsSqlToRedshiftBaseException(S3UploadFailedError)
 
-def copy_to_redshift(conn_redshift, table_name, file_name):
-    """
-    Fire "Copy" commands to load AWS Redshift
-    :param conn_redshift:
-    :param table_name:
-    :param file_name:
-    :return: 0 on success, sys.exit on error
-    """
-    aws_access_key_id = os.getenv("aws_access_key_id")
-    aws_secret_access_key = os.getenv("aws_secret_access_key")
+    def check_bucket(self):
+        try:
+            self.s3_client.head_bucket(Bucket=S3_BUCKET_NAME)
+        except ClientError:
+            raise MsSqlToRedshiftBaseException(ClientError)
 
-    try:
-        cur = conn_redshift.cursor()
-        cur.execute("begin;")
+    def disconnect_redshift(self):
+        self.redshift_conn.disconnect()
 
-        copy_redshift_string = 'copy ' + table_name + " from 's3://" + S3_BUCKET_NAME + '/' \
-                               + S3_TARGET_DIR + '/' \
-                               + file_name + "' credentials " \
-                               + "'aws_access_key_id=" + aws_access_key_id \
-                               + "; aws_secret_access_key=" + aws_secret_access_key + "' csv;"
-        cur.execute(copy_redshift_string)
-        cur.execute("commit;")
-        return 0
-    except psycopg2.Error as pse_err:
-        logging.error(f'AWS Redshift copy command failed, {pse_err}')
-        raise MsSqlToRedshiftBaseException(pse_err)
+    def copy_to_redshift(self, table_name, file_name):
+        try:
+            cur = self.redshift_conn.cursor()
+            cur.execute("begin;")
+
+            copy_redshift_cmd = 'copy ' + table_name + " from 's3://" + S3_BUCKET_NAME + '/' \
+                                + S3_TARGET_DIR + '/' \
+                                + file_name + "' credentials " \
+                                + "'aws_access_key_id=" + self.aws_access_key_id \
+                                + "; aws_secret_access_key=" + self.aws_secret_access_key + "' csv;"
+            cur.execute(copy_redshift_cmd)
+            cur.execute("commit;")
+        except psycopg2.Error as pse_err:
+            raise MsSqlToRedshiftBaseException(pse_err)
