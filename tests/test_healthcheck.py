@@ -2,8 +2,6 @@
 from mssql_to_redshift_data_transfer_tool.lib.mssql import MsSql
 from mssql_to_redshift_data_transfer_tool.lib.aws import Aws
 
-AWS = Aws()
-
 
 def test_connect_mssql():
     """
@@ -23,6 +21,8 @@ def test_connect_redshift():
     AWS Redshift test connectivity function
     :return:
     """
+    AWS = Aws()
+
     redshift_conn = Aws().__repr__()['redshift_conn']
     cursor = redshift_conn.cursor()
     cursor.execute("SELECT 0")
@@ -36,5 +36,7 @@ def test_s3_init():
     AWS S3 test connectivity function
     :return:
     """
+    AWS = Aws()
+
     actual_result = AWS.check_bucket()
     assert actual_result == 0
