@@ -4,13 +4,13 @@ import os
 
 from mssql_to_redshift_data_transfer_tool import __main__
 
-
 def test_dry_run():
     """
     test dry run
     :return:
     """
-    target_dir = os.getcwd() + os.sep + 'files'
+    target_dir = os.path.join(os.getcwd(), "files")
+
     prepared_args = {'database_name': 'MSSQL_to_Redshift',
                      'schema_name': 'mngmt',
                      'generated_csv_files_target_directory': target_dir,

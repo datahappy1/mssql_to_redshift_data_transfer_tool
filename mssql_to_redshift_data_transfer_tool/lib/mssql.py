@@ -1,13 +1,15 @@
 """ MSSQL module """
 import pyodbc
-from os import getenv
 
+from mssql_to_redshift_data_transfer_tool.lib import ODBC_MSSQL_DSN_NAME, \
+    ODBC_MSSQL_UID, ODBC_MSSQL_PWD
 from mssql_to_redshift_data_transfer_tool.exceptions import MsSqlToRedshiftBaseException
 
 
-def _connect(dsn_name, uid='', pwd=''):
+def _connect():
     try:
-        return pyodbc.connect(f'DSN={dsn_name};UID={uid};PWD={pwd}')
+        return pyodbc.connect(f'DSN={ODBC_MSSQL_DSN_NAME};'
+                              f'UID={ODBC_MSSQL_UID};PWD={ODBC_MSSQL_PWD}')
     except pyodbc.InterfaceError as i_err:
         raise MsSqlToRedshiftBaseException(i_err)
     except pyodbc.DatabaseError as db_err:
@@ -16,9 +18,7 @@ def _connect(dsn_name, uid='', pwd=''):
 
 class MsSql:
     def __init__(self):
-        self.conn = _connect(dsn_name=getenv('odbc_mssql_dsn_name'),
-                             uid=getenv('odbc_mssql_uid'),
-                             pwd=getenv('odbc_mssql_pwd'))
+        self.conn = _connect()
 
     def __repr__(self):
         return self.conn

@@ -11,8 +11,11 @@ def test_connect_mssql():
     conn_mssql = MsSql().__repr__()
     cursor = conn_mssql.cursor()
     cursor.execute("SELECT 0")
+
     actual_result = str(cursor.fetchone())
+
     conn_mssql.close()
+
     assert actual_result == "(0, )"
 
 
@@ -21,13 +24,16 @@ def test_connect_redshift():
     AWS Redshift test connectivity function
     :return:
     """
-    AWS = Aws()
+    aws_redshift_client = Aws.Redshift()
 
-    redshift_conn = Aws().__repr__()['redshift_conn']
+    redshift_conn = aws_redshift_client.__repr__()['redshift_conn']
     cursor = redshift_conn.cursor()
     cursor.execute("SELECT 0")
+
     actual_result = str(cursor.fetchone())
-    AWS.disconnect_redshift()
+
+    aws_redshift_client.disconnect_redshift()
+
     assert actual_result == "(0,)"
 
 
@@ -36,7 +42,8 @@ def test_s3_init():
     AWS S3 test connectivity function
     :return:
     """
-    AWS = Aws()
+    aws_s3_client = Aws.S3()
 
-    actual_result = AWS.check_bucket()
+    actual_result = aws_s3_client.check_bucket()
+
     assert actual_result == 0

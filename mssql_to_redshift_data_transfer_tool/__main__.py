@@ -26,7 +26,7 @@ class Runner:
         self.is_dry_run = dry_run
         self.generated_csv_files_target_directory = generated_csv_files_target_directory
         self.logger = get_logger(dry_run=self.is_dry_run)
-        self.aws_obj = Aws()
+        self.created_csv_file_names_list = None
 
     def prepare_target_dir_if_not_exists(self):
         if not os.path.exists(self.generated_csv_files_target_directory):
@@ -38,17 +38,17 @@ class Runner:
                 raise MsSqlToRedshiftBaseException(os_err)
 
     def run_ms_sql_extract_stored_procedure(self):
-        conn_mssql = MsSql()
+        ms_sql_client = MsSql()
 
         self.logger.info('Generating .csv files using BCP in a stored procedure started')
 
-        _return_sp_value = conn_mssql.run_extract_filter_bcp_stored_procedure(
+        _return_sp_value = ms_sql_client.run_extract_filter_bcp_stored_procedure(
             self.database_name,
             self.schema_name,
             self.generated_csv_files_target_directory,
             self.is_dry_run)
 
-        conn_mssql.disconnect()
+        ms_sql_client.disconnect()
 
         if "MS SQL error, details:" in _return_sp_value:
             self.logger.error('SQL code error in the stored procedure %s', _return_sp_value)
@@ -61,13 +61,11 @@ class Runner:
         else:
             self.logger.info('Generating .csv files using BCP in a stored procedure finished')
 
-        created_csv_file_names_list = _return_sp_value[0][0].strip('()').split(',')
+        self.created_csv_file_names_list = _return_sp_value[0][0].strip('()').split(',')
 
-        return created_csv_file_names_list
+    def check_files_size(self):
 
-    def check_files_size(self, created_csv_file_names_list):
-
-        for file_name in created_csv_file_names_list:
+        for file_name in self.created_csv_file_names_list:
             if os.path.isfile(file_name):
                 file_size = os.path.getsize(file_name)
 
@@ -81,40 +79,44 @@ class Runner:
 
         self.logger.info('All generated .csv files passed the max file size check')
 
-    def run_aws_s3_file_uploads(self, created_csv_file_names_list):
+    def run_aws_s3_file_uploads(self):
+        aws_s3_client = Aws.S3()
+
         self.logger.info('Upload of .csv files to S3 bucket starting')
 
-        for raw_file_name in created_csv_file_names_list:
+        for raw_file_name in self.created_csv_file_names_list:
             full_file_name = raw_file_name.strip("'")
             file_name = full_file_name.rsplit('\\', 1)[1]
 
-            self.aws_obj.upload_to_s3(self.is_dry_run, full_file_name, file_name)
+            aws_s3_client.upload_to_s3(self.is_dry_run, full_file_name, file_name)
 
             self.logger.info('Upload of %s to S3 bucket passed', file_name)
 
         self.logger.info('Upload of .csv files to S3 bucket finished')
 
-    def run_aws_redshift_copy_commands(self, created_csv_file_names_list):
+    def run_aws_redshift_copy_commands(self):
+        aws_redshift_client = Aws.Redshift()
+
         self.logger.info('Copy of the .csv files to the AWS Redshift cluster started')
 
-        for file_name in created_csv_file_names_list:
+        for file_name in self.created_csv_file_names_list:
             full_file_name = file_name.strip("'")
             file_name = full_file_name.rsplit('\\', 1)[1]
             table_name = file_name[0:(len(file_name) - 24)]
 
-            self.aws_obj.copy_to_redshift(self.is_dry_run, table_name, file_name)
+            aws_redshift_client.copy_to_redshift(self.is_dry_run, table_name, file_name)
 
         self.logger.info('Copy of the .csv files to the AWS Redshift cluster finished')
 
-        self.aws_obj.disconnect_redshift()
+        aws_redshift_client.disconnect_redshift()
 
     def run(self):
         try:
             self.prepare_target_dir_if_not_exists()
-            mssql_sp_return_value = self.run_ms_sql_extract_stored_procedure()
-            self.check_files_size(created_csv_file_names_list=mssql_sp_return_value)
-            self.run_aws_s3_file_uploads(created_csv_file_names_list=mssql_sp_return_value)
-            self.run_aws_redshift_copy_commands(created_csv_file_names_list=mssql_sp_return_value)
+            self.run_ms_sql_extract_stored_procedure()
+            self.check_files_size()
+            self.run_aws_s3_file_uploads()
+            self.run_aws_redshift_copy_commands()
 
             self.logger.info('Success')
 
@@ -155,5 +157,6 @@ def prepare_args():
 
 if __name__ == "__main__":
     PREPARED_ARGS = prepare_args()
+
     RUNNER_OBJ = Runner(**PREPARED_ARGS)
-    Runner.run(RUNNER_OBJ)
+    RUNNER_OBJ.run()
