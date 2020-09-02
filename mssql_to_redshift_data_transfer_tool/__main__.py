@@ -88,11 +88,16 @@ class Runner:
         defined max file size in settings.py
         :return:
         """
+        _file_size_list = []
+
         for file_name in self.created_csv_file_names_list:
             if os.path.isfile(file_name):
                 file_size = os.path.getsize(file_name)
+                file_size_mb = file_size / 1048576
 
-                if file_size / 1048576 > CSV_MAX_FILE_SIZE:
+                _file_size_list.append(file_size_mb)
+
+                if file_size_mb > CSV_MAX_FILE_SIZE:
                     self.logger.error('The file %s has file size %s MB and that is larger than '
                                       'CSV_MAX_FILE_SIZE set in settings.py',
                                       file_name, str(file_size))
@@ -101,7 +106,8 @@ class Runner:
                 self.logger.error('Invalid file %s', file_name)
                 raise MsSqlToRedshiftBaseException
 
-        self.logger.info('All generated .csv files passed the max file size check')
+        self.logger.info('All generated .csv files passed the max file size check, '
+                         'max file size is %s MB', str(max(_file_size_list)))
 
     def run_aws_s3_file_uploads(self):
         """
@@ -110,13 +116,13 @@ class Runner:
         """
         aws_s3_client = S3()
 
-        self.logger.info('Upload of .csv files to S3 bucket starting')
+        self.logger.info('Upload of .csv files to S3 bucket started')
 
         for raw_file_name in self.created_csv_file_names_list:
             full_file_name = raw_file_name.strip("'")
             file_name = full_file_name.rsplit('\\', 1)[1]
 
-            aws_s3_client.upload_to_s3(self.is_dry_run, full_file_name, file_name)
+            aws_s3_client.upload_to_s3(full_file_name, file_name)
 
             self.logger.info('Upload of %s to S3 bucket passed', file_name)
 

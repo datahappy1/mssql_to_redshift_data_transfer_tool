@@ -39,17 +39,13 @@ class S3:
     def __repr__(self):
         return self.s3_client
 
-    def upload_to_s3(self, dry_run, local_file_name, remote_file_name):
+    def upload_to_s3(self, local_file_name, remote_file_name):
         """
         method for uploading a file to S3
-        :param dry_run:
         :param local_file_name:
         :param remote_file_name:
         :return:
         """
-        if dry_run is True:
-            return
-
         try:
             transfer = S3Transfer(self.s3_client)
             transfer.upload_file(local_file_name, S3_BUCKET_NAME,
@@ -94,20 +90,18 @@ class Redshift:
         :param file_name:
         :return:
         """
-        if dry_run is True:
-            return
+        copy_redshift_cmd = 'copy ' + table_name + " from 's3://" + S3_BUCKET_NAME + '/' \
+                            + S3_TARGET_DIR + '/' \
+                            + file_name + "' credentials " \
+                            + "'aws_access_key_id=" + AWS_ACCESS_KEY_ID \
+                            + ";aws_secret_access_key=" + AWS_SECRET_ACCESS_KEY + "' csv;"
 
         try:
             cur = self.redshift_conn.cursor()
             cur.execute("begin;")
-
-            copy_redshift_cmd = 'copy ' + table_name + " from 's3://" + S3_BUCKET_NAME + '/' \
-                                + S3_TARGET_DIR + '/' \
-                                + file_name + "' credentials " \
-                                + "'aws_access_key_id=" + AWS_ACCESS_KEY_ID \
-                                + ";aws_secret_access_key=" + AWS_SECRET_ACCESS_KEY + "' csv;"
-
             cur.execute(copy_redshift_cmd)
+            if dry_run:
+                cur.execute("rollback;")
             cur.execute("commit;")
         except psycopg2.Error as pse_err:
             raise MsSqlToRedshiftBaseException(pse_err)
