@@ -17,6 +17,9 @@ def _connect():
 
 
 class MsSql:
+    """
+    MsSql base class
+    """
     def __init__(self):
         self.conn = _connect()
 
@@ -24,10 +27,22 @@ class MsSql:
         return self.conn
 
     def disconnect(self):
+        """
+        method for closing the connection
+        :return:
+        """
         self.conn.close()
 
     def run_extract_filter_bcp_stored_procedure(self, database_name, schema_name,
                                                 target_directory, dry_run):
+        """
+        method for running the target Stored Procedure
+        :param database_name:
+        :param schema_name:
+        :param target_directory:
+        :param dry_run:
+        :return:
+        """
         try:
             cursor = self.conn.cursor()
 
@@ -38,7 +53,7 @@ class MsSql:
             params = (database_name, schema_name, target_directory, dry_run)
             cursor.execute(sql_cmd, params)
 
-            cursor_fetched_data=cursor.fetchall()
+            cursor_fetched_data = cursor.fetchall()
             cursor.close()
 
             return cursor_fetched_data

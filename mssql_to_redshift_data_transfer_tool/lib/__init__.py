@@ -1,3 +1,4 @@
+"""__init__.py"""
 from os import getenv
 
 ODBC_MSSQL_DSN_NAME = getenv('odbc_mssql_dsn_name')

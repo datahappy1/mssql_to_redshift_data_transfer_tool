@@ -4,6 +4,7 @@ import os
 
 from mssql_to_redshift_data_transfer_tool import __main__
 
+
 def test_dry_run():
     """
     test dry run

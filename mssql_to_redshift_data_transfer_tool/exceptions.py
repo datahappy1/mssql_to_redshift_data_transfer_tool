@@ -2,4 +2,6 @@
 
 
 class MsSqlToRedshiftBaseException(Exception):
-    pass
+    """
+    base MsSql to Redshift tool exception
+    """
