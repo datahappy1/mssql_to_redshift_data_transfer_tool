@@ -17,7 +17,6 @@ def get_logger(dry_run=None):
     :return:
     """
     logging.basicConfig(level=logging.INFO)
-    # logging.getLogger("botocore").setLevel(logging.WARNING)
 
     _name = 'DRY RUN ' + __name__ if bool(dry_run) else __name__
     logger = logging.getLogger(_name)
@@ -106,8 +105,10 @@ class Runner:
                 self.logger.error('Invalid file %s', file_name)
                 raise MsSqlToRedshiftBaseException
 
+        file_size_max = max(_file_size_list) if _file_size_list else 0
+
         self.logger.info('All generated .csv files passed the max file size check, '
-                         'max file size is %s MB', str(max(_file_size_list)))
+                         'max file size is %s MB', str(file_size_max))
 
     def run_aws_s3_file_uploads(self):
         """
