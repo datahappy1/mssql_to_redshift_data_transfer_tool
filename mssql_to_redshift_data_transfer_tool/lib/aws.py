@@ -100,8 +100,11 @@ class Redshift:
             cur = self.redshift_conn.cursor()
             cur.execute("begin;")
             cur.execute(copy_redshift_cmd)
+
             if dry_run:
                 cur.execute("rollback;")
-            cur.execute("commit;")
+            else:
+                cur.execute("commit;")
+
         except psycopg2.Error as pse_err:
             raise MsSqlToRedshiftBaseException(pse_err)
