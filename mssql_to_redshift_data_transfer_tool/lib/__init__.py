@@ -1,14 +1,18 @@
 """__init__.py"""
-from os import getenv
+import os
 
-ODBC_MSSQL_DSN_NAME = getenv('odbc_mssql_dsn_name')
-ODBC_MSSQL_UID = getenv('odbc_mssql_uid')
-ODBC_MSSQL_PWD = getenv('odbc_mssql_pwd')
+from mssql_to_redshift_data_transfer_tool.exceptions import MsSqlToRedshiftBaseException
 
-AWS_ACCESS_KEY_ID = getenv('aws_access_key_id')
-AWS_SECRET_ACCESS_KEY = getenv('aws_secret_access_key')
+try:
+    ODBC_MSSQL_DSN_NAME = os.environ["odbc_mssql_dsn_name"]
+    AWS_ACCESS_KEY_ID = os.environ["aws_access_key_id"]
+    AWS_SECRET_ACCESS_KEY = os.environ["aws_secret_access_key"]
+    REDSHIFT_HOST = os.environ["redshift_host"]
+    REDSHIFT_PORT = os.environ["redshift_port"]
+    REDSHIFT_USER = os.environ["redshift_user"]
+    REDSHIFT_PASS = os.environ["redshift_pass"]
+except KeyError as key_err:
+    raise MsSqlToRedshiftBaseException(f"Missing environment variable {key_err}")
 
-REDSHIFT_HOST = getenv("redshift_host")
-REDSHIFT_PORT = getenv("redshift_port")
-REDSHIFT_USER = getenv("redshift_user")
-REDSHIFT_PASS = getenv("redshift_pass")
+ODBC_MSSQL_UID = os.getenv("odbc_mssql_uid")
+ODBC_MSSQL_PWD = os.getenv("odbc_mssql_pwd")

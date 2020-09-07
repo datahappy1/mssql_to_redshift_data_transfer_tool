@@ -36,6 +36,7 @@ class Runner:
         self.logger = get_logger(dry_run=self.is_dry_run)
         self.created_csv_file_names_list = None
 
+
     def prepare_local_folder_if_not_exists(self):
         """
         method creating local folder to store csv files
@@ -163,12 +164,10 @@ class Runner:
             self.run_aws_redshift_copy_commands()
 
             self.logger.info('Success')
-
             return 0
 
         except MsSqlToRedshiftBaseException as exc:
-            self.logger.info('Failure %s', exc)
-
+            self.logger.info('Failure: %s', exc)
             return 1
 
 
