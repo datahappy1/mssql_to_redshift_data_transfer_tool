@@ -36,7 +36,6 @@ class Runner:
         self.logger = get_logger(dry_run=self.is_dry_run)
         self.created_csv_file_names_list = None
 
-
     def prepare_local_folder_if_not_exists(self):
         """
         method creating local folder to store csv files
@@ -70,15 +69,11 @@ class Runner:
 
         ms_sql_client.disconnect()
 
-        if "MS SQL error, details:" in _return_sp_value:
-            self.logger.error('SQL code error in the stored procedure %s', _return_sp_value)
-            raise MsSqlToRedshiftBaseException
+        self.logger.info('Generating .csv files using BCP in a stored procedure finished')
 
-        if "No .csv files generated" in _return_sp_value:
+        if not _return_sp_value:
             self.logger.error('No .csv files generated')
             raise MsSqlToRedshiftBaseException
-
-        self.logger.info('Generating .csv files using BCP in a stored procedure finished')
 
         self.created_csv_file_names_list = _return_sp_value[0][0].strip('()').split(',')
 
@@ -120,11 +115,10 @@ class Runner:
 
         self.logger.info('Upload of .csv files to S3 bucket started')
 
-        for raw_file_name in self.created_csv_file_names_list:
-            full_file_name = raw_file_name.strip("'")
-            file_name = full_file_name.rsplit('\\', 1)[1]
+        for file_abs_path in self.created_csv_file_names_list:
+            file_name = os.path.basename(file_abs_path)
 
-            aws_s3_client.upload_to_s3(full_file_name, file_name)
+            aws_s3_client.upload_to_s3(file_abs_path, file_name)
 
             self.logger.info('Upload of %s to S3 bucket passed', file_name)
 
@@ -140,12 +134,11 @@ class Runner:
 
         self.logger.info('Copy of the .csv files to the AWS Redshift cluster started')
 
-        for file_name in self.created_csv_file_names_list:
-            full_file_name = file_name.strip("'")
-            file_name = full_file_name.rsplit('\\', 1)[1]
-            table_name = file_name[0:(len(file_name) - 24)]
+        for file_abs_path in self.created_csv_file_names_list:
+            base_file_name = os.path.basename(file_abs_path)
+            table_name = base_file_name[0:(len(base_file_name) - 24)]
 
-            aws_redshift_client.copy_to_redshift(self.is_dry_run, table_name, file_name)
+            aws_redshift_client.copy_to_redshift(self.is_dry_run, table_name, base_file_name)
 
         self.logger.info('Copy of the .csv files to the AWS Redshift cluster finished')
 
@@ -167,7 +160,7 @@ class Runner:
             return 0
 
         except MsSqlToRedshiftBaseException as exc:
-            self.logger.info('Failure: %s', exc)
+            self.logger.error(exc)
             return 1
 
 
@@ -189,10 +182,9 @@ def prepare_args():
     generated_csv_files_target_directory = \
         parsed.generated_csv_files_target_directory.replace('\f', '\\f')
 
-    _dry_run = parsed.dryrun
+    dry_run = parsed.dryrun
     # arg parse bool data type known bug workaround
-    dry_run = True
-    if _dry_run.lower() in ('no', 'false', 'f', 'n', 0):
+    if dry_run.lower() in ('no', 'false', 'f', 'n', 0):
         dry_run = False
 
     return {"database_name": database_name,

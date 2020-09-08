@@ -15,7 +15,7 @@ It consumes arguments defining:
 - `--databasename` or `-dn` ( the name of the database with the tables in MSSQL you wish to migrate over, this argument needs to be aligned with the values in the column DatabaseName inside the configuration table MSSQL_to_Redshift.mngmt.ControlTable )
 - `--schemaname` or `-sn` ( the name of the database schema with the tables in MSSQL you wish to migrate over, this argument needs to be aligned with the values in the column SchemaName inside the configuration table MSSQL_to_Redshift.mngmt.ControlTable )
 - `--generated_csv_files_target_directory` or `-td` ( the local folder where you wish to store your .csv files, if the folder not exists, it will be created for you during the runtime)
-- `--dryrun` or `-dr` ( `True` | `False` allowed ,this argument let's you run a dry run for testing purposes)
+- `--dryrun` or `-dr` ( `True` | `False` allowed ,this argument let's you run a dry run for testing purposes, filtering SQL Server data to 0 rows)
 
 
 ## How this tool works
