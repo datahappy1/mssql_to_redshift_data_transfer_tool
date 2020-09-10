@@ -31,7 +31,7 @@ To install:
 - create and activate a virtual environment
 - download Windows Postgres Driver from https://www.enterprisedb.com/downloads/postgres-postgresql-downloads
 - `pip3 install -r requirements.txt` 
-- run the database build script using `mssql_database_buildscript.sql` 
+- run the database build script using `mssql_database_buildscript.sql` located [here](https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/blob/master/install/mssql_database_buildscript.sql)
 
 Setup these environment variables:
 - `odbc_mssql_dsn_name` - **mandatory** MSSQL DSN name for PyODBC
@@ -87,11 +87,11 @@ Run these commands to execute:
 
 
 ## How to setup a new MSSQL to Redshift data migration project
-1) Setup the database tables with their columns that you need to transfer over to AWS Redshift in the MSSQL Configuration table mngmt.ControlTable
+1) Setup the database tables with their columns that you need to transfer over to AWS Redshift in the MSSQL Configuration table `MSSQL_to_Redshift.mngmt.ControlTable`
 > Note that this tool's internal database MSSQL_to_Redshift has to be installed at the same host where your source MSSQL databases are located.
 > Another option is to use Linked Servers
-2) Don't forget to setup the project-scoped settings like the AWS S3 bucket name, the maximum csv filesize, database names and others under /src/settings.py
-3) Make sure you've got your AWS Redshift tables ready
+2) Don't forget to setup the project-scoped settings like the AWS S3 bucket name, the maximum csv filesize in MB, database names and others using [settings.py](https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/blob/master/mssql_to_redshift_data_transfer_tool/settings.py)
+3) Make sure you've got your AWS Redshift tables ready ( the Redshift tables need to be named exactly like the tables configured in `MSSQL_to_Redshift.mngmt.ControlTable` MSSQL table )
 4) Set the Pythonpath env.variable
 5) Try running this tool with the `--Dryrun` argument first set to `true`
-6) Now you can go and configure the databases, schemas and table names that will be transferred over to AWS Redshift in the `MSSQL_to_Redshift.mngmt.ControlTable` SQL Server table
+6) Now you can go and configure the databases, schemas and table names that will be transferred over to AWS Redshift in the `MSSQL_to_Redshift.mngmt.ControlTable` MSSQL table

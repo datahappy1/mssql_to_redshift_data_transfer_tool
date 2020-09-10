@@ -4,7 +4,7 @@ import argparse
 import logging
 
 from mssql_to_redshift_data_transfer_tool.exceptions import MsSqlToRedshiftBaseException
-from mssql_to_redshift_data_transfer_tool.settings import CSV_MAX_FILE_SIZE
+from mssql_to_redshift_data_transfer_tool.settings import CSV_MAX_FILE_SIZE_MB
 from mssql_to_redshift_data_transfer_tool.lib.mssql import MsSql
 from mssql_to_redshift_data_transfer_tool.lib.aws import S3, Redshift
 
@@ -95,7 +95,7 @@ class Runner:
 
                 _file_size_list.append(file_size_mb)
 
-                if file_size_mb > CSV_MAX_FILE_SIZE:
+                if file_size_mb > CSV_MAX_FILE_SIZE_MB:
                     self.logger.error('The file %s has file size %s MB and that is larger than '
                                       'CSV_MAX_FILE_SIZE set in settings.py',
                                       file_name, str(file_size))
