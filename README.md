@@ -5,7 +5,7 @@ MSSQL to AWS Redshift data transfer tool written in Python 3.7
 
 - [Introduction](#introduction)
 - [How this tool works](#how-this-tool-works)
-- [How to install and run the program](#how-to-install-and-run-the-program)
+- [How to install and run the tool](#how-to-install-and-run-the-tool)
 - [How to setup a new MSSQL to Redshift data migration project](#how-to-setup-a-new-MSSQL-to-Redshift-data-migration-project)
 
 
