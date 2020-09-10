@@ -29,7 +29,7 @@ To install:
 - `git clone https://www.github.com/datahappy1/mssql_to_redshift_data_transfer_tool mssql_to_redshift_data_transfer_tool`
 - `cd c:\mssql_to_redshift_data_transfer_tool`
 - create and activate a virtual environment
-- download Windows Postgres Driver https://www.enterprisedb.com/thank-you-downloading-postgresql?cid=48
+- download Windows Postgres Driver from https://www.enterprisedb.com/downloads/postgres-postgresql-downloads
 - `pip3 install -r requirements.txt` 
 - run the database build script using `mssql_database_buildscript.sql` 
 
@@ -82,7 +82,7 @@ You need to set the required arguments :
 - `--dryrun` or `-dr`
 
 Run these commands to execute:
-1) `cd src`
+1) `cd mssql_to_redshift_data_transfer_tool`
 2) `python mssql_to_redshift_data_transfer_tool.py -dn AdventureWorksDW2016 -sn dbo -td C:\mssql_to_redshift_data_transfer_tool\files -dr False`
 
 
@@ -94,3 +94,4 @@ Run these commands to execute:
 3) Make sure you've got your AWS Redshift tables ready
 4) Set the Pythonpath env.variable
 5) Try running this tool with the `--Dryrun` argument first set to `true`
+6) Now you can go and configure the databases, schemas and table names that will be transferred over to AWS Redshift in the `MSSQL_to_Redshift.mngmt.ControlTable` SQL Server table

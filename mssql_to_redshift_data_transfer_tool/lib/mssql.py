@@ -33,24 +33,16 @@ class MsSql:
         """
         self.conn.close()
 
-    def run_extract_filter_bcp_stored_procedure(self, database_name, schema_name,
-                                                target_directory, dry_run):
+    def run_stored_procedure(self, sql_cmd, params):
         """
         method for running the target Stored Procedure
-        :param database_name:
-        :param schema_name:
-        :param target_directory:
-        :param dry_run:
+        :param sql_cmd:
+        :param params:
         :return:
         """
         try:
             cursor = self.conn.cursor()
 
-            sql_cmd = """\
-            EXEC [MSSQL_to_Redshift].[mngmt].[Extract_Filter_BCP] 
-            @DatabaseName=?, @SchemaName=?, @TargetDirectory=?, @DryRun=?
-            """
-            params = (database_name, schema_name, target_directory, dry_run)
             cursor.execute(sql_cmd, params)
 
             cursor_fetched_data = cursor.fetchall()

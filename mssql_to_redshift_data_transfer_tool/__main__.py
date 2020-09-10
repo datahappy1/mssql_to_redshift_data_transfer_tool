@@ -61,11 +61,14 @@ class Runner:
 
         self.logger.info('Generating .csv files using BCP in a stored procedure started')
 
-        _return_sp_value = ms_sql_client.run_extract_filter_bcp_stored_procedure(
-            self.database_name,
-            self.schema_name,
-            self.generated_csv_files_target_directory,
-            self.is_dry_run)
+        command = """\
+            EXEC [MSSQL_to_Redshift].[mngmt].[Extract_Filter_BCP] 
+            @DatabaseName=?, @SchemaName=?, @TargetDirectory=?, @DryRun=?
+            """
+        params = (self.database_name, self.schema_name,
+                  self.generated_csv_files_target_directory, self.is_dry_run)
+
+        _return_sp_value = ms_sql_client.run_stored_procedure(command, params)
 
         ms_sql_client.disconnect()
 
@@ -182,10 +185,11 @@ def prepare_args():
     generated_csv_files_target_directory = \
         parsed.generated_csv_files_target_directory.replace('\f', '\\f')
 
-    dry_run = parsed.dryrun
     # arg parse bool data type known bug workaround
-    if dry_run.lower() in ('no', 'false', 'f', 'n', 0):
+    if parsed.dryrun.lower() in ('no', 'false', 'f', 'n', 0):
         dry_run = False
+    else:
+        dry_run = True
 
     return {"database_name": database_name,
             "schema_name": schema_name,
