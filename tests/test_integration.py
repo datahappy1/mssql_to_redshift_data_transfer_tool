@@ -1,4 +1,4 @@
-""" end to end test """
+""" integration end to end test """
 
 import os
 

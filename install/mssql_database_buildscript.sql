@@ -42,9 +42,7 @@ SELECT 'test_column_1_value', 'test_column_2_value'
 
 --For DEMO purposes, let's fill the control table for the transfer with the AdventureWorks DataWarehouse tables 
 --and set all columns as IsActive
--- USE AdventureWorksDW2016;
--- GO
-USE master;
+USE AdventureWorksDW2016;
 GO
 
 INSERT INTO MSSQL_to_Redshift.mngmt.ControlTable (DatabaseName, SchemaName, TableName, ColumnName, Column_id, IsActive)
@@ -156,7 +154,7 @@ END TRY
 BEGIN CATCH
 
 	SELECT
-			'MSSQL error, details:'
+		'MSSQL error, details:'
 		+ '  Error_Number' + CAST(ERROR_NUMBER() AS VARCHAR(9))
 		+ '; Error_Severity:' + CAST(ERROR_SEVERITY() AS VARCHAR(9))
 		+ '; Error_State:' + CAST(ERROR_STATE() AS VARCHAR(9))

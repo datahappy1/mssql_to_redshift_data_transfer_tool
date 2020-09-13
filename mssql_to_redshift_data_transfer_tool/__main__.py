@@ -28,6 +28,7 @@ class Runner:
     """
     main execution class
     """
+
     def __init__(self, database_name, schema_name, generated_csv_files_target_directory, dry_run):
         self.database_name = database_name
         self.schema_name = schema_name
@@ -68,17 +69,25 @@ class Runner:
         params = (self.database_name, self.schema_name,
                   self.generated_csv_files_target_directory, self.is_dry_run)
 
-        _return_sp_value = ms_sql_client.run_stored_procedure(command, params)
+        try:
+            _return_sp_value = ms_sql_client.run_stored_procedure(command, params)
+        except MsSqlToRedshiftBaseException as exc:
+            self.logger.error('Generating .csv files using BCP in a stored procedure failed '
+                              'with exception: %s', exc)
+            raise exc
 
         ms_sql_client.disconnect()
 
         self.logger.info('Generating .csv files using BCP in a stored procedure finished')
 
         if not _return_sp_value:
-            self.logger.error('No .csv files generated')
+            self.logger.error('No .csv files generated, check if '
+                              'database name: %s , schema name: %s '
+                              'are set in MSSQL mngmt.ControlTable',
+                              self.database_name, self.schema_name)
             raise MsSqlToRedshiftBaseException
 
-        self.created_csv_file_names_list = _return_sp_value[0][0].strip('()').split(',')
+        self.created_csv_file_names_list = [x[0].strip("()") for x in _return_sp_value]
 
     def check_files_size(self):
         """
@@ -91,7 +100,7 @@ class Runner:
         for file_name in self.created_csv_file_names_list:
             if os.path.isfile(file_name):
                 file_size = os.path.getsize(file_name)
-                file_size_mb = file_size / 1048576
+                file_size_mb = int(file_size / 1048576)
 
                 _file_size_list.append(file_size_mb)
 
@@ -121,9 +130,14 @@ class Runner:
         for file_abs_path in self.created_csv_file_names_list:
             file_name = os.path.basename(file_abs_path)
 
-            aws_s3_client.upload_to_s3(file_abs_path, file_name)
+            try:
+                aws_s3_client.upload_to_s3(file_abs_path, file_name)
+            except MsSqlToRedshiftBaseException as exc:
+                self.logger.error('Upload of .csv files to S3 bucket failed '
+                                  'with exception: %s', exc)
+                raise exc
 
-            self.logger.info('Upload of %s to S3 bucket passed', file_name)
+            self.logger.debug('Upload of %s to S3 bucket passed', file_name)
 
         self.logger.info('Upload of .csv files to S3 bucket finished')
 
@@ -141,7 +155,12 @@ class Runner:
             base_file_name = os.path.basename(file_abs_path)
             table_name = base_file_name[0:(len(base_file_name) - 24)]
 
-            aws_redshift_client.copy_to_redshift(self.is_dry_run, table_name, base_file_name)
+            try:
+                aws_redshift_client.copy_to_redshift(self.is_dry_run, table_name, base_file_name)
+            except MsSqlToRedshiftBaseException as exc:
+                self.logger.error('Copy of the .csv files to the AWS Redshift cluster failed '
+                                  'with exception: %s', exc)
+                raise exc
 
         self.logger.info('Copy of the .csv files to the AWS Redshift cluster finished')
 
@@ -162,8 +181,7 @@ class Runner:
             self.logger.info('Success')
             return 0
 
-        except MsSqlToRedshiftBaseException as exc:
-            self.logger.error(exc)
+        except MsSqlToRedshiftBaseException:
             return 1
 
 
