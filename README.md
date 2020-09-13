@@ -90,7 +90,8 @@ Run these commands to execute:
 1) Setup the database tables with their columns that you need to transfer over to AWS Redshift in the MSSQL Configuration table `MSSQL_to_Redshift.mngmt.ControlTable`
 > Note that this tool's internal database MSSQL_to_Redshift has to be installed at the same host where your source MSSQL databases are located.
 > Another option is to use Linked Servers
-2) Don't forget to setup the project-scoped settings like the AWS S3 bucket name, the maximum csv filesize in MB, database names and others using [settings.py](https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/blob/master/mssql_to_redshift_data_transfer_tool/settings.py)
+2) Don't forget to setup the project-scoped settings like the AWS S3 bucket name, the maximum csv filesize in MB, database names, logging level and others using [settings.py](https://github.com/datahappy1/mssql_to_redshift_data_transfer_tool/blob/master/mssql_to_redshift_data_transfer_tool/settings.py)
+> Allowed logging level values in settings.py are `'DEBUG'`, `'INFO'`, `'WARNING'`, `'ERROR'`, `'CRITICAL'`
 3) Make sure you've got your AWS Redshift tables ready 
 > Redshift tables need to be named exactly like the tables configured in `MSSQL_to_Redshift.mngmt.ControlTable` MSSQL table
 4) Set the Pythonpath env.variable

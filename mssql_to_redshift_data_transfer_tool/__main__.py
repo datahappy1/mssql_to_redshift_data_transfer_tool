@@ -3,8 +3,9 @@ import os
 import argparse
 import logging
 
-from mssql_to_redshift_data_transfer_tool.exceptions import MsSqlToRedshiftBaseException
-from mssql_to_redshift_data_transfer_tool.settings import CSV_MAX_FILE_SIZE_MB
+from mssql_to_redshift_data_transfer_tool.exceptions import MsSqlToRedshiftBaseException, \
+    UnknownLogLevelException
+from mssql_to_redshift_data_transfer_tool.settings import LOGGING_LEVEL, CSV_MAX_FILE_SIZE_MB
 from mssql_to_redshift_data_transfer_tool.lib.mssql import MsSql
 from mssql_to_redshift_data_transfer_tool.lib.aws import S3, Redshift
 
@@ -16,7 +17,16 @@ def get_logger(dry_run=None):
     :param dry_run:
     :return:
     """
-    logging.basicConfig(level=logging.INFO)
+    logging_level_uppercase = LOGGING_LEVEL.upper()
+
+    if logging_level_uppercase not in ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'):
+        raise UnknownLogLevelException(f'Unknown logging level {LOGGING_LEVEL}')
+
+    logging.basicConfig(level=logging_level_uppercase)
+
+    logging.getLogger('botocore').setLevel(logging.CRITICAL)
+    logging.getLogger('s3transfer').setLevel(logging.CRITICAL)
+    logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
     _name = 'DRY RUN ' + __name__ if bool(dry_run) else __name__
     logger = logging.getLogger(_name)
@@ -46,7 +56,7 @@ class Runner:
         if not os.path.exists(self.generated_csv_files_target_directory):
             try:
                 os.makedirs(self.generated_csv_files_target_directory)
-                self.logger.info('%s folder created', self.generated_csv_files_target_directory)
+                self.logger.debug('%s folder created', self.generated_csv_files_target_directory)
             except OSError as os_err:
                 self.logger.error('Could not create the %s folder, OSError',
                                   self.generated_csv_files_target_directory)
@@ -88,6 +98,9 @@ class Runner:
             raise MsSqlToRedshiftBaseException
 
         self.created_csv_file_names_list = [x[0].strip("()") for x in _return_sp_value]
+
+        for item in self.created_csv_file_names_list:
+            self.logger.debug(".csv file %s generated", item)
 
     def check_files_size(self):
         """
@@ -137,7 +150,7 @@ class Runner:
                                   'with exception: %s', exc)
                 raise exc
 
-            self.logger.debug('Upload of %s to S3 bucket passed', file_name)
+            self.logger.debug('Upload of %s to S3 bucket passed', file_abs_path)
 
         self.logger.info('Upload of .csv files to S3 bucket finished')
 
@@ -161,6 +174,9 @@ class Runner:
                 self.logger.error('Copy of the .csv files to the AWS Redshift cluster failed '
                                   'with exception: %s', exc)
                 raise exc
+
+            self.logger.debug('.csv file %s copied to AWS Redshift table %s',
+                              file_abs_path, table_name)
 
         self.logger.info('Copy of the .csv files to the AWS Redshift cluster finished')
 
