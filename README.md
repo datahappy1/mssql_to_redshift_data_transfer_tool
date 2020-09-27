@@ -39,7 +39,7 @@ Setup these environment variables:
 - `odbc_mssql_pwd` - **optional** MSSQL DSN password, not needed if you set the password in Windows ODBC connection
 - `aws_access_key_id` -**mandatory** AWS Access key ID 
 - `aws_secret_access_key` -**mandatory** AWS Secret access key
-- `redshift_host` -**mandatory** AWS Redshift host name
+- `redshift_host` -**mandatory** AWS Redshift host name ( for example redshift-cluster-1.xxx.us-east-1.redshift.amazonaws.com )
 - `redshift_port` -**mandatory** AWS Redshift port ( integer )
 - `redshift_user` -**mandatory** AWS Redshift user name
 - `redshift_pass` -**mandatory** AWS Redshift password

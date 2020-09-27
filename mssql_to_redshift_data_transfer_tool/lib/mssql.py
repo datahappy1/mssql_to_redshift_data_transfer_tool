@@ -10,11 +10,8 @@ def _connect():
     try:
         return pyodbc.connect(f'DSN={ODBC_MSSQL_DSN_NAME};'
                               f'UID={ODBC_MSSQL_UID};PWD={ODBC_MSSQL_PWD}')
-    except pyodbc.InterfaceError as i_err:
-        raise MsSqlToRedshiftBaseException(i_err)
-    except pyodbc.DatabaseError as db_err:
-        raise MsSqlToRedshiftBaseException(db_err)
-
+    except pyodbc.Error as err:
+        raise MsSqlToRedshiftBaseException(err)
 
 class MsSql:
     """
