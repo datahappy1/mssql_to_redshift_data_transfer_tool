@@ -206,19 +206,11 @@ class Runner:
         """
         try:
             self.prepare_local_folder_if_not_exists()
-
-            created_csv_file_names_list = \
-                self.run_ms_sql_extract_stored_procedure()
-
+            created_csv_file_names_list = self.run_ms_sql_extract_stored_procedure()
             self.check_files_size(created_csv_file_names_list)
-
             self.run_aws_s3_file_uploads(created_csv_file_names_list)
-
             self.run_aws_redshift_copy_commands(created_csv_file_names_list)
-
-            self.logger.info('Success')
             return 0
-
         except MsSqlToRedshiftBaseException:
             return 1
 
@@ -255,6 +247,5 @@ def prepare_args():
 
 if __name__ == "__main__":
     PREPARED_ARGS = prepare_args()
-
-    RUNNER_OBJ = Runner(**PREPARED_ARGS)
-    RUNNER_OBJ.run()
+    RUNNER = Runner(**PREPARED_ARGS)
+    RUNNER.run()

@@ -33,6 +33,7 @@ class S3:
     """
     AWS S3 class
     """
+
     def __init__(self):
         self.s3_client = _init_s3_client()
 
@@ -69,6 +70,7 @@ class Redshift:
     """
     AWS Redshift class
     """
+
     def __init__(self):
         self.redshift_conn = _connect_to_redshift()
 

@@ -13,10 +13,12 @@ def _connect():
     except pyodbc.Error as err:
         raise MsSqlToRedshiftBaseException(err)
 
+
 class MsSql:
     """
     MsSql base class
     """
+
     def __init__(self):
         self.conn = _connect()
 
@@ -39,9 +41,7 @@ class MsSql:
         """
         try:
             cursor = self.conn.cursor()
-
             cursor.execute(sql_cmd, params)
-
             cursor_fetched_data = cursor.fetchall()
             cursor.close()
 
